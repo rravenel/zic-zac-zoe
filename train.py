@@ -32,7 +32,7 @@ from model import (
     save_model, get_device
 )
 from evaluate import eval_vs_random, eval_tactical, eval_model_vs_model, EvalResult
-from tactical_generator import generate_tactical_samples, tactical_sample_to_training_sample, PatternType
+from tactical_generator import generate_tactical_samples, tactical_sample_to_training_sample, PatternType, TacticalSample
 
 
 # =============================================================================
@@ -63,8 +63,9 @@ class TrainConfig:
     # Model settings
     num_filters: int = 64
 
-    # Tactical injection
-    tactical_samples_per_type: int = 70  # Generate 70 of each pattern per iteration (~15% of training data)
+    # Tactical injection with negative mining
+    tactical_samples_per_type: int = 70  # Target tactical samples per pattern type per iteration
+    tactical_mining_multiplier: int = 4  # Generate 4x samples, keep failures (negative mining)
 
     # Reanalyze (MuZero-style)
     reanalyze_simulations: int = 50  # MCTS sims for reanalyze (less than self-play)
@@ -657,6 +658,83 @@ def prepare_batch(samples: List[Sample], device: torch.device):
     return states, policy_targets, outcomes
 
 
+def mine_tactical_failures(model: ZicZacNet, device: torch.device,
+                           n_per_type: int, multiplier: int = 4) -> List[TacticalSample]:
+    """
+    Generate tactical samples using negative mining.
+
+    Generates multiplier*n_per_type samples, runs model inference,
+    and keeps only the ones the model gets wrong (failures).
+    If not enough failures, fills with successful samples.
+
+    Args:
+        model: Current model for inference
+        device: Torch device
+        n_per_type: Target number of samples per pattern type
+        multiplier: Generate this many times more samples for mining
+
+    Returns:
+        List of TacticalSample objects, enriched with model failures
+    """
+    # Generate expanded pool of samples
+    expanded_n = n_per_type * multiplier
+    all_samples = generate_tactical_samples(n_per_type=expanded_n, seed=None)
+
+    if not all_samples:
+        return []
+
+    # Run batched inference
+    model.eval()
+    with torch.no_grad():
+        boards = [Board(s.board_state) for s in all_samples]
+        states = boards_to_tensor(boards, device)
+        log_policy, _ = model(states)
+        # Log probs work fine for argmax (monotonic), skip exp()
+        policy = log_policy.cpu().numpy()
+
+    # Determine model's move for each sample and whether it's correct
+    is_failure = []
+    for i, sample in enumerate(all_samples):
+        # Get legal moves from board state
+        legal_moves = [j for j in range(36) if sample.board_state[j] == Player.EMPTY]
+        if not legal_moves:
+            is_failure.append(False)
+            continue
+
+        # Mask illegal moves to -inf and pick argmax
+        sample_policy = np.full(36, -np.inf)
+        sample_policy[legal_moves] = policy[i, legal_moves]
+        move = int(np.argmax(sample_policy))
+
+        is_failure.append(move not in sample.correct_moves)
+
+    # Group by pattern type with failure status
+    by_type: Dict[PatternType, Tuple[List[TacticalSample], List[TacticalSample]]] = {}
+    for i, sample in enumerate(all_samples):
+        if sample.pattern_type not in by_type:
+            by_type[sample.pattern_type] = ([], [])  # (failures, successes)
+        failures, successes = by_type[sample.pattern_type]
+        if is_failure[i]:
+            failures.append(sample)
+        else:
+            successes.append(sample)
+
+    # Select samples: failures first (shuffled), then fill with successes (shuffled)
+    result_samples = []
+    for pattern_type, (failures, successes) in by_type.items():
+        # Shuffle both to avoid bias toward earlier-generated positions
+        random.shuffle(failures)
+        random.shuffle(successes)
+
+        selected = failures[:n_per_type]
+        if len(selected) < n_per_type:
+            remaining = n_per_type - len(selected)
+            selected.extend(successes[:remaining])
+        result_samples.extend(selected)
+
+    return result_samples
+
+
 def train_on_buffer(model: ZicZacNet, optimizer: optim.Optimizer,
                     replay_buffer: ReplayBuffer, config: TrainConfig,
                     device: torch.device,
@@ -883,12 +961,14 @@ def train(config: Optional[TrainConfig] = None, num_iterations: int = 100,
         # Returns Sample objects WITH policy_target from MCTS
         fresh_samples, game_stats = self_play_games(model, device, config)
 
-        # Generate tactical samples with known-correct policy
+        # Generate tactical samples with negative mining
+        # Generate 4x samples, run inference, keep failures (enriches hard cases)
         tactical_training_samples = []
         if config.tactical_samples_per_type > 0:
-            tactical_samples = generate_tactical_samples(
+            tactical_samples = mine_tactical_failures(
+                model, device,
                 n_per_type=config.tactical_samples_per_type,
-                seed=None  # Random each time
+                multiplier=config.tactical_mining_multiplier
             )
             tactical_training_samples = [
                 tactical_sample_to_training_sample(ts)

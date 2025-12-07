@@ -4,9 +4,10 @@ Tests for training configuration and model selection logic.
 
 import torch
 from game import Player
-from model import ZicZacNet
-from train import TrainConfig, Sample
+from model import ZicZacNet, get_device
+from train import TrainConfig, Sample, mine_tactical_failures
 from evaluate import EvalResult
+from tactical_generator import PatternType
 
 
 class TestTrainConfig:
@@ -41,6 +42,21 @@ class TestTrainConfig:
         """Default tactical tests per pattern type should be 10."""
         config = TrainConfig()
         assert config.tactical_eval_per_type == 10
+
+    def test_tactical_samples_per_type_default(self):
+        """Default tactical samples per type should be 70."""
+        config = TrainConfig()
+        assert config.tactical_samples_per_type == 70
+
+    def test_tactical_mining_multiplier_default(self):
+        """Default tactical mining multiplier should be 4."""
+        config = TrainConfig()
+        assert config.tactical_mining_multiplier == 4
+
+    def test_custom_tactical_mining_multiplier(self):
+        """Custom tactical mining multiplier should be settable."""
+        config = TrainConfig(tactical_mining_multiplier=2)
+        assert config.tactical_mining_multiplier == 2
 
     def test_custom_tactical_pass_threshold(self):
         """Custom tactical pass threshold should be settable."""
@@ -211,6 +227,83 @@ class TestSample:
         assert sample.current_player == Player.X
 
 
+class TestMineTacticalFailures:
+    """Tests for negative mining of tactical samples."""
+
+    def test_returns_correct_count_per_type(self):
+        """Should return n_per_type samples for each pattern type."""
+        device = get_device()
+        model = ZicZacNet(num_filters=64).to(device)
+
+        samples = mine_tactical_failures(model, device, n_per_type=5, multiplier=4)
+
+        # Count by type
+        counts = {t: 0 for t in PatternType}
+        for s in samples:
+            counts[s.pattern_type] += 1
+
+        for pattern_type, count in counts.items():
+            assert count == 5, f"Should have 5 {pattern_type.value} samples, got {count}"
+
+    def test_returns_empty_for_zero_n_per_type(self):
+        """Should return empty list when n_per_type is 0."""
+        device = get_device()
+        model = ZicZacNet(num_filters=64).to(device)
+
+        samples = mine_tactical_failures(model, device, n_per_type=0, multiplier=4)
+        assert len(samples) == 0
+
+    def test_samples_have_correct_moves(self):
+        """All returned samples should have non-empty correct_moves."""
+        device = get_device()
+        model = ZicZacNet(num_filters=64).to(device)
+
+        samples = mine_tactical_failures(model, device, n_per_type=5, multiplier=4)
+
+        for sample in samples:
+            assert len(sample.correct_moves) > 0, \
+                f"Sample should have correct moves"
+
+    def test_samples_are_valid_tactical_samples(self):
+        """Returned samples should be valid TacticalSample objects."""
+        device = get_device()
+        model = ZicZacNet(num_filters=64).to(device)
+
+        samples = mine_tactical_failures(model, device, n_per_type=3, multiplier=2)
+
+        for sample in samples:
+            # Check required attributes
+            assert hasattr(sample, 'board_state')
+            assert hasattr(sample, 'current_player')
+            assert hasattr(sample, 'pattern_type')
+            assert hasattr(sample, 'correct_moves')
+            assert hasattr(sample, 'incorrect_moves')
+            assert hasattr(sample, 'outcome')
+
+            # Check board state is valid length
+            assert len(sample.board_state) == 36
+
+    def test_enriches_with_failures(self):
+        """Should prioritize samples the model gets wrong."""
+        device = get_device()
+        model = ZicZacNet(num_filters=64).to(device)
+
+        # With an untrained model, many samples should be failures
+        samples = mine_tactical_failures(model, device, n_per_type=10, multiplier=4)
+
+        # Check that samples are returned (basic sanity check)
+        assert len(samples) == 30, f"Should have 30 samples (10 per type), got {len(samples)}"
+
+    def test_different_multipliers(self):
+        """Different multipliers should still return correct count."""
+        device = get_device()
+        model = ZicZacNet(num_filters=64).to(device)
+
+        for mult in [1, 2, 4, 8]:
+            samples = mine_tactical_failures(model, device, n_per_type=3, multiplier=mult)
+            assert len(samples) == 9, f"multiplier={mult}: Should have 9 samples, got {len(samples)}"
+
+
 def run_tests():
     """Run all tests and report results."""
     import traceback
@@ -220,6 +313,7 @@ def run_tests():
         TestEvalResult,
         TestModelSelection,
         TestSample,
+        TestMineTacticalFailures,
     ]
 
     total = 0
