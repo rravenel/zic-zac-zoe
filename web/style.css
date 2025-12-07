@@ -380,3 +380,14 @@ body {
   letter-spacing: 1px;
   z-index: 10;
 }
+
+.guardrail-weight {
+  position: fixed;
+  bottom: 25px;
+  right: 10px;
+  font-family: var(--font-arcade);
+  font-size: 10px;
+  color: var(--color-dim);
+  letter-spacing: 1px;
+  z-index: 10;
+}

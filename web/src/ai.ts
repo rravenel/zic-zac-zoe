@@ -18,6 +18,11 @@ export const DIFFICULTY = {
 
 export type Difficulty = keyof typeof DIFFICULTY;
 
+export interface AIResult {
+  move: number;
+  guardrailWeight: number;
+}
+
 // Guardrail decay rates per difficulty (higher = faster decay)
 // At moveCount=0, guardrail is at full strength
 // Decay formula: strength = max(0, 1 - (moveCount / 36) * decayRate)
@@ -526,7 +531,7 @@ function sampleMove(
 export async function getAIMove(
   board: BoardState,
   difficulty: Difficulty
-): Promise<number> {
+): Promise<AIResult> {
   const legalMoves = getLegalMoves(board);
 
   // Fallback: if anything goes wrong, pick random legal move
@@ -537,12 +542,18 @@ export async function getAIMove(
   try {
     if (!weights) {
       console.warn("Model not loaded, using random move");
-      return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+      return {
+        move: legalMoves[Math.floor(Math.random() * legalMoves.length)],
+        guardrailWeight: 0,
+      };
     }
 
     const temperature = DIFFICULTY[difficulty];
     const currentPlayer = getCurrentPlayer(board);
     const moveCount = board.filter((c) => c !== Player.Empty).length;
+
+    // Calculate guardrail strength for this position
+    const guardrailStrength = getGuardrailStrength(moveCount, difficulty);
 
     // Generate tactical mask with guardrails
     const tacticalMask = getTacticalMask(board, currentPlayer, moveCount, difficulty);
@@ -551,10 +562,27 @@ export async function getAIMove(
     const input = boardToTensor(board);
     const { policyLogits } = forward(input);
 
-    return sampleMove(policyLogits, legalMoves, temperature, tacticalMask);
+    const move = sampleMove(policyLogits, legalMoves, temperature, tacticalMask);
+
+    // Determine guardrail weight for the chosen move
+    let guardrailWeight = 0;
+    const maskValue = tacticalMask[move];
+    if (maskValue === Infinity || maskValue === -Infinity) {
+      // Hard mask (winning move or forced suicide fallback)
+      guardrailWeight = 1.0;
+    } else if (maskValue > 0) {
+      // Blocking move - weight is the guardrail strength
+      guardrailWeight = guardrailStrength;
+    }
+    // else: normal move, weight stays 0
+
+    return { move, guardrailWeight };
   } catch (error) {
     console.error("AI move calculation failed, using random move:", error);
-    return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+    return {
+      move: legalMoves[Math.floor(Math.random() * legalMoves.length)],
+      guardrailWeight: 0,
+    };
   }
 }
 
