@@ -54,13 +54,23 @@ const state: GameState = {
 const boardEl = document.getElementById("board")!;
 const statusEl = document.getElementById("status")!;
 const loadingEl = document.getElementById("loading")!;
-const btnFirst = document.getElementById("btn-first")!;
-const btnSecond = document.getElementById("btn-second")!;
-const btnEasy = document.getElementById("btn-easy")!;
-const btnMedium = document.getElementById("btn-medium")!;
-const btnHard = document.getElementById("btn-hard")!;
-const btnExpert = document.getElementById("btn-expert")!;
+const btnPlayer = document.getElementById("btn-player")!;
+const btnDifficulty = document.getElementById("btn-difficulty")!;
 const btnNewGame = document.getElementById("btn-new-game")!;
+
+// Player options for cycling
+const PLAYER_OPTIONS: { value: Player; label: string }[] = [
+  { value: Player.X, label: "1ST (X)" },
+  { value: Player.O, label: "2ND (O)" },
+];
+
+// Difficulty options for cycling
+const DIFFICULTY_OPTIONS: { value: Difficulty; label: string }[] = [
+  { value: "easy", label: "EASY" },
+  { value: "medium", label: "MEDIUM" },
+  { value: "hard", label: "HARD" },
+  { value: "expert", label: "EXPERT" },
+];
 
 // =============================================================================
 // Rendering
@@ -180,18 +190,16 @@ function updateStatus(): void {
 }
 
 /**
- * Update button selection states
+ * Update button text to reflect current state
  */
 function updateButtons(): void {
-  // Player buttons
-  btnFirst.classList.toggle("selected", state.humanPlayer === Player.X);
-  btnSecond.classList.toggle("selected", state.humanPlayer === Player.O);
+  // Player button
+  const playerOption = PLAYER_OPTIONS.find(o => o.value === state.humanPlayer);
+  btnPlayer.textContent = playerOption?.label ?? "1ST (X)";
 
-  // Difficulty buttons
-  btnEasy.classList.toggle("selected", state.difficulty === "easy");
-  btnMedium.classList.toggle("selected", state.difficulty === "medium");
-  btnHard.classList.toggle("selected", state.difficulty === "hard");
-  btnExpert.classList.toggle("selected", state.difficulty === "expert");
+  // Difficulty button
+  const diffOption = DIFFICULTY_OPTIONS.find(o => o.value === state.difficulty);
+  btnDifficulty.textContent = diffOption?.label ?? "MEDIUM";
 }
 
 // =============================================================================
@@ -301,37 +309,20 @@ async function makeAIMove(): Promise<void> {
 // =============================================================================
 
 function setupEventListeners(): void {
-  // Player selection
-  btnFirst.addEventListener("click", () => {
-    state.humanPlayer = Player.X;
+  // Player selection - cycles through options and starts new game
+  btnPlayer.addEventListener("click", () => {
+    const currentIndex = PLAYER_OPTIONS.findIndex(o => o.value === state.humanPlayer);
+    const nextIndex = (currentIndex + 1) % PLAYER_OPTIONS.length;
+    state.humanPlayer = PLAYER_OPTIONS[nextIndex].value;
     updateButtons();
     newGame();
   });
 
-  btnSecond.addEventListener("click", () => {
-    state.humanPlayer = Player.O;
-    updateButtons();
-    newGame();
-  });
-
-  // Difficulty selection
-  btnEasy.addEventListener("click", () => {
-    state.difficulty = "easy";
-    updateButtons();
-  });
-
-  btnMedium.addEventListener("click", () => {
-    state.difficulty = "medium";
-    updateButtons();
-  });
-
-  btnHard.addEventListener("click", () => {
-    state.difficulty = "hard";
-    updateButtons();
-  });
-
-  btnExpert.addEventListener("click", () => {
-    state.difficulty = "expert";
+  // Difficulty selection - cycles through options
+  btnDifficulty.addEventListener("click", () => {
+    const currentIndex = DIFFICULTY_OPTIONS.findIndex(o => o.value === state.difficulty);
+    const nextIndex = (currentIndex + 1) % DIFFICULTY_OPTIONS.length;
+    state.difficulty = DIFFICULTY_OPTIONS[nextIndex].value;
     updateButtons();
   });
 

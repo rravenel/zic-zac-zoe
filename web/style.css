@@ -260,25 +260,23 @@ body {
   margin-top: 20px;
 }
 
+.control-row {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
 .control-group {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  width: 100%;
 }
 
 .control-label {
   font-size: 8px;
   color: var(--color-dim);
   letter-spacing: 1px;
-}
-
-.button-group {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  justify-content: center;
 }
 
 .btn {
@@ -305,6 +303,13 @@ body {
 }
 
 .btn.selected {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: var(--glow-btn);
+}
+
+.btn-cycle {
+  min-width: 90px;
   border-color: var(--color-primary);
   color: var(--color-primary);
   box-shadow: var(--glow-btn);
