@@ -1,0 +1,1 @@
+always use .venv when appropriate (like running python)

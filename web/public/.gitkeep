@@ -1,0 +1,2 @@
+# This directory holds the model.onnx file after export
+# Run: python export_model.py

@@ -1,0 +1,365 @@
+/* =============================================================================
+   ZIC-ZAC-ZOE - Retro 80s Arcade Styling
+   ============================================================================= */
+
+/* Import retro pixel font */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* CSS Variables */
+:root {
+  --color-bg: #0a0a0a;
+  --color-primary: #00ffff;
+  --color-secondary: #ff00ff;
+  --color-win: #00ff00;
+  --color-lose: #ff0000;
+  --color-text: #ffffff;
+  --color-turn: #ffcc00;
+  --color-dim: #888888;
+  --color-cell-bg: #1a1a2e;
+  --color-cell-border: #00ffff;
+  --color-x: #00ffff;
+  --color-o: #ff00ff;
+
+  --glow-board: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+  --glow-btn: 0 0 8px rgba(0, 255, 255, 0.5);
+  --glow-btn-secondary: 0 0 8px rgba(255, 0, 255, 0.5);
+  --glow-win-cell: 0 0 5px #00ff00, 0 0 10px #00ff00;
+  --glow-lose-cell: 0 0 5px #ff0000, 0 0 10px #ff0000;
+
+  --font-arcade: 'Press Start 2P', monospace;
+}
+
+/* Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-arcade);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 20px;
+  min-height: 100%;
+
+  /* CRT scanline effect */
+  background-image:
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.03));
+  background-size: 100% 4px, 3px 100%;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  /* Dimensions set by JavaScript */
+}
+
+/* =============================================================================
+   Header
+   ============================================================================= */
+
+.header {
+  text-align: center;
+}
+
+.title {
+  font-size: 32px;
+  color: var(--color-primary);
+  letter-spacing: 3px;
+  white-space: nowrap;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: var(--color-secondary);
+  margin-top: 6px;
+  letter-spacing: 1px;
+  line-height: 1.6;
+}
+
+/* =============================================================================
+   Status Display
+   ============================================================================= */
+
+.status {
+  font-size: 20px;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8px;
+}
+
+.status.thinking {
+  color: var(--color-primary);
+  animation: pulse 1s infinite;
+}
+
+.status.your-turn {
+  color: var(--color-turn);
+}
+
+.status.win {
+  font-size: 32px;
+  color: var(--color-win);
+  animation: winner 0.5s ease-in-out infinite alternate;
+}
+
+.status.lose {
+  font-size: 32px;
+  color: var(--color-lose);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes winner {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+
+/* =============================================================================
+   Game Board
+   ============================================================================= */
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  width: 360px;
+  height: 360px;
+  padding: 8px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #0a0a1a 100%);
+  border: 3px solid var(--color-primary);
+  border-radius: 8px;
+  box-shadow: var(--glow-board), inset 0 0 20px rgba(0, 255, 255, 0.1);
+}
+
+.cell {
+  aspect-ratio: 1;
+  background-color: var(--color-cell-bg);
+  border: 2px solid var(--color-dim);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cell:hover:not(.occupied):not(.game-over) {
+  background-color: #2a2a4e;
+  border-color: var(--color-primary);
+}
+
+.cell:active:not(.occupied):not(.game-over) {
+  transform: scale(0.95);
+}
+
+.cell.occupied {
+  cursor: default;
+}
+
+.cell.game-over {
+  cursor: default;
+}
+
+.cell .piece {
+  font-weight: bold;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.cell .piece.x {
+  color: var(--color-x);
+}
+
+.cell .piece.o {
+  color: var(--color-o);
+}
+
+/* Last move highlight - matches token color */
+.cell.last-move:has(.piece.x) {
+  border-color: var(--color-x);
+  box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.cell.last-move:has(.piece.o) {
+  border-color: var(--color-o);
+  box-shadow: inset 0 0 15px rgba(255, 0, 255, 0.3);
+}
+
+/* Win highlight (4 in a row) */
+.cell.win-highlight {
+  background-color: rgba(0, 255, 0, 0.2);
+  border-color: var(--color-win);
+  box-shadow: var(--glow-win-cell);
+  animation: win-pulse 0.5s ease-in-out infinite alternate;
+}
+
+.cell.win-highlight .piece {
+  color: var(--color-win);
+}
+
+/* Lose highlight (3 in a row) */
+.cell.lose-highlight {
+  background-color: rgba(255, 0, 0, 0.2);
+  border-color: var(--color-lose);
+  box-shadow: var(--glow-lose-cell);
+  animation: lose-pulse 0.5s ease-in-out infinite alternate;
+}
+
+.cell.lose-highlight .piece {
+  color: var(--color-lose);
+}
+
+@keyframes win-pulse {
+  from { box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; }
+  to { box-shadow: 0 0 15px #00ff00, 0 0 30px #00ff00; }
+}
+
+@keyframes lose-pulse {
+  from { box-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000; }
+  to { box-shadow: 0 0 15px #ff0000, 0 0 30px #ff0000; }
+}
+
+/* =============================================================================
+   Controls
+   ============================================================================= */
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 20px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.control-label {
+  font-size: 8px;
+  color: var(--color-dim);
+  letter-spacing: 1px;
+}
+
+.button-group {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn {
+  font-family: var(--font-arcade);
+  font-size: 10px;
+  padding: 6px 10px;
+  border: 2px solid var(--color-dim);
+  border-radius: 4px;
+  background-color: var(--color-cell-bg);
+  color: var(--color-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+.btn.selected {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: var(--glow-btn);
+}
+
+.btn-primary {
+  margin-top: 8px;
+  padding: 8px 20px;
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+}
+
+.btn-primary:hover {
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+  box-shadow: var(--glow-btn-secondary);
+}
+
+/* =============================================================================
+   Loading Overlay
+   ============================================================================= */
+
+.loading {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: opacity 0.3s ease;
+}
+
+.loading.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-text {
+  font-size: 16px;
+  color: var(--color-primary);
+  animation: pulse 1s infinite;
+}
+
+/* =============================================================================
+   Model Iteration Indicator
+   ============================================================================= */
+
+.model-iteration {
+  position: fixed;
+  bottom: 25px;
+  left: 10px;
+  font-family: var(--font-arcade);
+  font-size: 10px;
+  color: var(--color-dim);
+  letter-spacing: 1px;
+  z-index: 10;
+}
