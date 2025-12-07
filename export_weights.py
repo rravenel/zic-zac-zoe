@@ -1,14 +1,14 @@
 """
 Export model weights to JSON for pure JavaScript inference.
 
-The model is small enough (~50K params) that we can implement
-the forward pass directly in JS without needing ONNX runtime.
+Model uses 3-channel input (X positions, O positions, turn indicator).
 """
 
 import json
 import argparse
+import re
 import torch
-from model import load_model
+from model import ZicZacNet
 
 
 def tensor_to_list(tensor):
@@ -18,10 +18,11 @@ def tensor_to_list(tensor):
     return [tensor_to_list(t) for t in tensor]
 
 
-def export_weights_to_json(model_path: str, output_path: str) -> None:
+def export_weights_to_json(model_path: str, output_path: str, iteration: int = None) -> None:
     """Export model weights to JSON format."""
     print(f"Loading model from {model_path}...")
-    model = load_model(model_path, device=torch.device("cpu"))
+    model = ZicZacNet()
+    model.load_state_dict(torch.load(model_path, map_location=torch.device("cpu")))
     model.eval()
 
     weights = {}
@@ -35,6 +36,19 @@ def export_weights_to_json(model_path: str, output_path: str) -> None:
     for name, buf in model.named_buffers():
         weights[name] = tensor_to_list(buf.detach())
         print(f"  {name}: {list(buf.shape)}")
+
+    # Add metadata
+    weights["_input_channels"] = 3
+
+    # Extract iteration from filename if not provided
+    if iteration is None:
+        match = re.search(r'iter_(\d+)', model_path)
+        if match:
+            iteration = int(match.group(1))
+
+    if iteration is not None:
+        weights["_iteration"] = iteration
+        print(f"  _iteration: {iteration}")
 
     print(f"\nExporting to {output_path}...")
     with open(output_path, "w") as f:
@@ -51,7 +65,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model",
         type=str,
-        default="checkpoints/model_final.pt",
+        default="checkpoints/model_best.pt",
         help="Path to PyTorch model",
     )
     parser.add_argument(
@@ -60,6 +74,12 @@ if __name__ == "__main__":
         default="web/public/weights.json",
         help="Output path for JSON weights",
     )
+    parser.add_argument(
+        "--iteration",
+        type=int,
+        default=None,
+        help="Iteration number (auto-detected from filename if not provided)",
+    )
 
     args = parser.parse_args()
-    export_weights_to_json(args.model, args.output)
+    export_weights_to_json(args.model, args.output, args.iteration)

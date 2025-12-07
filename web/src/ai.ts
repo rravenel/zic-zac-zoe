@@ -308,7 +308,6 @@ interface ModelWeights {
 }
 
 let weights: ModelWeights | null = null;
-let modelVersion: number = 1;  // 1 = 2-channel, 2 = 3-channel with turn indicator
 
 // =============================================================================
 // Model Loading and Inference
@@ -323,24 +322,7 @@ export async function loadModel(weightsPath: string): Promise<void> {
     throw new Error(`Failed to load weights: ${response.status}`);
   }
   weights = await response.json();
-
-  // Detect model version from metadata or conv1 weight shape
-  if (weights._version) {
-    modelVersion = weights._version;
-  } else {
-    // Infer from conv1 input channels: v1 has 2 channels, v2 has 3
-    const conv1Channels = weights["conv1.weight"][0].length;
-    modelVersion = conv1Channels === 3 ? 2 : 1;
-  }
-
-  console.log(`AI model v${modelVersion} loaded successfully (${modelVersion === 2 ? '3-channel' : '2-channel'})`);
-}
-
-/**
- * Get current model version
- */
-export function getModelVersion(): number {
-  return modelVersion;
+  console.log("AI model loaded successfully");
 }
 
 /**
@@ -359,15 +341,13 @@ export function isModelLoaded(): boolean {
 
 /**
  * Convert board to tensor format
- * v1: [1, 2, 6, 6] - X positions, O positions
- * v2: [1, 3, 6, 6] - X positions, O positions, turn indicator
+ * Input: [1, 3, 6, 6] - X positions, O positions, turn indicator
  */
 function boardToTensor(board: BoardState): Tensor4D {
-  const numChannels = modelVersion === 2 ? 3 : 2;
   const tensor: Tensor4D = [[]];
 
-  // Initialize with zeros
-  for (let c = 0; c < numChannels; c++) {
+  // Initialize 3 channels with zeros
+  for (let c = 0; c < 3; c++) {
     tensor[0][c] = [];
     for (let h = 0; h < BOARD_SIZE; h++) {
       tensor[0][c][h] = new Array(BOARD_SIZE).fill(0);
@@ -385,14 +365,12 @@ function boardToTensor(board: BoardState): Tensor4D {
     }
   }
 
-  // v2: Add turn indicator channel (1 if X's turn, 0 if O's turn)
-  if (modelVersion === 2) {
-    const currentPlayer = getCurrentPlayer(board);
-    const turnValue = currentPlayer === Player.X ? 1 : 0;
-    for (let h = 0; h < BOARD_SIZE; h++) {
-      for (let w = 0; w < BOARD_SIZE; w++) {
-        tensor[0][2][h][w] = turnValue;
-      }
+  // Turn indicator channel (1 if X's turn, 0 if O's turn)
+  const currentPlayer = getCurrentPlayer(board);
+  const turnValue = currentPlayer === Player.X ? 1 : 0;
+  for (let h = 0; h < BOARD_SIZE; h++) {
+    for (let w = 0; w < BOARD_SIZE; w++) {
+      tensor[0][2][h][w] = turnValue;
     }
   }
 

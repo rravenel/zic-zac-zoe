@@ -208,9 +208,9 @@ export function getRulesMove(board: BoardState, currentPlayer: Player): number {
 }
 
 /**
- * Check if rules AI is being used
+ * Check if rules AI is being used (via ?rules=1 URL param)
  */
 export function isRulesAI(): boolean {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get("v3") === "1" || urlParams.get("model") === "v3";
+  return urlParams.get("rules") === "1";
 }

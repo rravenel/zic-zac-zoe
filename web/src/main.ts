@@ -388,28 +388,19 @@ async function init(): Promise<void> {
   // Update initial button states
   updateButtons();
 
-  // v3 = rules-based AI (no model needed)
-  // v2 is default, use v1 only with URL param (?v1=1 or ?model=v1)
   const iterationEl = document.getElementById("model-iteration");
 
   if (isRulesAI()) {
-    // v3: Rules-based AI, no model loading needed
+    // Rules-based AI (no model needed) - enabled via ?rules=1
     loadingEl.classList.add("hidden");
     if (iterationEl) {
-      iterationEl.textContent = "RULES V3";
+      iterationEl.textContent = "RULES";
     }
     newGame();
   } else {
-    // v1/v2: Load neural network model
-    const urlParams = new URLSearchParams(window.location.search);
-    const useV1 = urlParams.get("v1") === "1" || urlParams.get("model") === "v1";
-
+    // Load neural network model
     try {
-      let weightsFile = "weights_v2.json";
-      if (useV1) {
-        weightsFile = "weights.json";
-      }
-      const weightsPath = import.meta.env.DEV ? `/${weightsFile}` : `./${weightsFile}`;
+      const weightsPath = import.meta.env.DEV ? "/weights.json" : "./weights.json";
       await loadModel(weightsPath);
       loadingEl.classList.add("hidden");
 
@@ -425,7 +416,6 @@ async function init(): Promise<void> {
       console.error("Failed to load model:", error);
       const loadingText = loadingEl.querySelector(".loading-text")!;
       loadingText.textContent = "FAILED TO LOAD AI";
-      // Show error details in console for debugging
       if (error instanceof Error) {
         console.error("Error details:", error.message);
       }

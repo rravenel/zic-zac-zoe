@@ -1,8 +1,8 @@
 """
-Neural Network Model for Zic-Zac-Zoe
+Neural Network Model for Zic-Zac-Zoe (V2 - with turn indicator)
 
 Architecture: Small CNN with policy and value heads.
-- Input: 6x6x2 (X positions, O positions)
+- Input: 3x6x6 (channels: X positions, O positions, turn indicator)
 - Body: 3 conv layers
 - Policy head: outputs 36 move probabilities
 - Value head: outputs win probability [-1, 1]
@@ -24,9 +24,10 @@ class ZicZacNet(nn.Module):
     """
     CNN for Zic-Zac-Zoe.
 
-    Input shape: (batch, 2, 6, 6)
+    Input shape: (batch, 3, 6, 6)
         - Channel 0: X positions (1 where X, 0 elsewhere)
         - Channel 1: O positions (1 where O, 0 elsewhere)
+        - Channel 2: Turn indicator (1 if X's turn, 0 if O's turn)
 
     Outputs:
         - policy: (batch, 36) log probabilities for each move
@@ -44,7 +45,7 @@ class ZicZacNet(nn.Module):
         # ---------------------------------------------------------------------
         # Convolutional body (shared feature extraction)
         # ---------------------------------------------------------------------
-        self.conv1 = nn.Conv2d(2, num_filters, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(3, num_filters, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm2d(num_filters)
 
         self.conv2 = nn.Conv2d(num_filters, num_filters, kernel_size=3, padding=1)
@@ -73,7 +74,7 @@ class ZicZacNet(nn.Module):
         Forward pass.
 
         Args:
-            x: Input tensor of shape (batch, 2, 6, 6)
+            x: Input tensor of shape (batch, 3, 6, 6)
 
         Returns:
             policy: (batch, 36) log probabilities (use with NLLLoss or sample with exp)
@@ -112,10 +113,10 @@ def board_to_tensor(board: Board, device: torch.device = None) -> torch.Tensor:
         device: Target device (cpu, cuda, mps)
 
     Returns:
-        Tensor of shape (1, 2, 6, 6)
+        Tensor of shape (1, 3, 6, 6)
     """
-    # Create 2-channel representation
-    tensor = torch.zeros(1, 2, BOARD_SIZE, BOARD_SIZE)
+    # Create 3-channel representation
+    tensor = torch.zeros(1, 3, BOARD_SIZE, BOARD_SIZE)
 
     for i, cell in enumerate(board.state):
         row = i // BOARD_SIZE
@@ -124,6 +125,10 @@ def board_to_tensor(board: Board, device: torch.device = None) -> torch.Tensor:
             tensor[0, 0, row, col] = 1.0
         elif cell == Player.O:
             tensor[0, 1, row, col] = 1.0
+
+    # Channel 2: Turn indicator (1 if X's turn, 0 if O's turn)
+    if board.current_player() == Player.X:
+        tensor[0, 2, :, :] = 1.0
 
     if device is not None:
         tensor = tensor.to(device)
@@ -140,9 +145,9 @@ def boards_to_tensor(boards: List[Board], device: torch.device = None) -> torch.
         device: Target device
 
     Returns:
-        Tensor of shape (batch, 2, 6, 6)
+        Tensor of shape (batch, 3, 6, 6)
     """
-    batch = torch.zeros(len(boards), 2, BOARD_SIZE, BOARD_SIZE)
+    batch = torch.zeros(len(boards), 3, BOARD_SIZE, BOARD_SIZE)
 
     for b, board in enumerate(boards):
         for i, cell in enumerate(board.state):
@@ -152,6 +157,10 @@ def boards_to_tensor(boards: List[Board], device: torch.device = None) -> torch.
                 batch[b, 0, row, col] = 1.0
             elif cell == Player.O:
                 batch[b, 1, row, col] = 1.0
+
+        # Channel 2: Turn indicator (1 if X's turn, 0 if O's turn)
+        if board.current_player() == Player.X:
+            batch[b, 2, :, :] = 1.0
 
     if device is not None:
         batch = batch.to(device)
