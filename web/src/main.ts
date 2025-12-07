@@ -48,6 +48,59 @@ const state: GameState = {
 };
 
 // =============================================================================
+// Stats Tracking
+// =============================================================================
+
+interface Stats {
+  won: number;
+  lost: number;
+}
+
+const STATS_KEY = "ziczaczoe_stats";
+
+function loadStats(): Stats {
+  try {
+    const saved = localStorage.getItem(STATS_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    // Ignore errors
+  }
+  return { won: 0, lost: 0 };
+}
+
+function saveStats(stats: Stats): void {
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  } catch (e) {
+    // Ignore errors
+  }
+}
+
+const stats: Stats = loadStats();
+
+function updateStatsDisplay(): void {
+  const statsEl = document.getElementById("stats")!;
+  statsEl.textContent = `WON: ${String(stats.won).padStart(3, "0")} - LOST: ${String(stats.lost).padStart(3, "0")}`;
+}
+
+function recordGameResult(result: GameResult, humanPlayer: Player): void {
+  // Don't track ties - just win/loss
+  if (result === GameResult.Draw) {
+    return;
+  }
+  const winner = result === GameResult.XWins ? Player.X : Player.O;
+  if (winner === humanPlayer) {
+    stats.won++;
+  } else {
+    stats.lost++;
+  }
+  saveStats(stats);
+  updateStatsDisplay();
+}
+
+// =============================================================================
 // DOM Elements
 // =============================================================================
 
@@ -242,6 +295,7 @@ function makeHumanMove(index: number): void {
   if (result.result !== GameResult.Ongoing) {
     state.gameOver = true;
     state.result = result;
+    recordGameResult(result.result, state.humanPlayer);
     renderBoard();
     updateStatus();
     return;
@@ -286,6 +340,7 @@ async function makeAIMove(): Promise<void> {
   if (result.result !== GameResult.Ongoing) {
     state.gameOver = true;
     state.result = result;
+    recordGameResult(result.result, state.humanPlayer);
   }
 
   renderBoard();
@@ -366,6 +421,9 @@ async function init(): Promise<void> {
 
   // Update initial button states
   updateButtons();
+
+  // Show stats
+  updateStatsDisplay();
 
   const iterationEl = document.getElementById("model-iteration");
 
