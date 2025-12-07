@@ -145,37 +145,25 @@ function renderBoard(): void {
  * Update the status display
  */
 function updateStatus(): void {
-  statusEl.classList.remove("thinking", "your-turn", "win", "lose");
+  statusEl.classList.remove("thinking", "your-turn", "win", "lose", "draw");
 
   if (state.gameOver && state.result) {
     const { result, losingPlayer } = state.result;
 
     if (result === GameResult.Draw) {
-      statusEl.textContent = "DRAW";
-      statusEl.classList.add("your-turn");
+      statusEl.textContent = "TIE!";
+      statusEl.classList.add("draw");
     } else {
       // Determine winner
       const winner = result === GameResult.XWins ? Player.X : Player.O;
       const humanWins = winner === state.humanPlayer;
 
-      if (losingPlayer !== null) {
-        // Someone lost by making 3 in a row
-        if (losingPlayer === state.humanPlayer) {
-          statusEl.textContent = "YOU LOSE!";
-          statusEl.classList.add("lose");
-        } else {
-          statusEl.textContent = "I LOSE!!!";
-          statusEl.classList.add("win");
-        }
+      if (humanWins) {
+        statusEl.textContent = "YOU WIN!!!";
+        statusEl.classList.add("win");
       } else {
-        // Someone won by making 4 in a row
-        if (humanWins) {
-          statusEl.textContent = "YOU WIN!!!";
-          statusEl.classList.add("win");
-        } else {
-          statusEl.textContent = "I WIN!";
-          statusEl.classList.add("lose");
-        }
+        statusEl.textContent = "GAME OVER";
+        statusEl.classList.add("lose");
       }
     }
   } else {
