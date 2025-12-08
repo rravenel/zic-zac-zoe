@@ -181,25 +181,8 @@ export function checkResult(board: BoardState): GameCheckResult {
   const xResult = getMaxConsecutive(board, Player.X);
   const oResult = getMaxConsecutive(board, Player.O);
 
-  // Check for loss (exactly 3 in a row) - takes priority
-  if (xResult.count === LOSE_LENGTH) {
-    return {
-      result: GameResult.OWins,
-      winningIndices: [],
-      losingIndices: xResult.indices,
-      losingPlayer: Player.X,
-    };
-  }
-  if (oResult.count === LOSE_LENGTH) {
-    return {
-      result: GameResult.XWins,
-      winningIndices: [],
-      losingIndices: oResult.indices,
-      losingPlayer: Player.O,
-    };
-  }
-
-  // Check for win (4+ in a row)
+  // 4-beats-3 rule: Check win BEFORE loss.
+  // If a move creates both 4-in-a-row and 3-in-a-row, the 4 wins.
   if (xResult.count >= WIN_LENGTH) {
     return {
       result: GameResult.XWins,
@@ -214,6 +197,24 @@ export function checkResult(board: BoardState): GameCheckResult {
       winningIndices: oResult.indices,
       losingIndices: [],
       losingPlayer: null,
+    };
+  }
+
+  // Check for loss (exactly 3 in a row) - only if no win
+  if (xResult.count === LOSE_LENGTH) {
+    return {
+      result: GameResult.OWins,
+      winningIndices: [],
+      losingIndices: xResult.indices,
+      losingPlayer: Player.X,
+    };
+  }
+  if (oResult.count === LOSE_LENGTH) {
+    return {
+      result: GameResult.XWins,
+      winningIndices: [],
+      losingIndices: oResult.indices,
+      losingPlayer: Player.O,
     };
   }
 
@@ -287,7 +288,18 @@ export function checkResultFast(
     }
   }
 
-  // Check loss (exactly 3)
+  // 4-beats-3 rule: Check win BEFORE loss.
+  // If a move creates both 4-in-a-row and 3-in-a-row, the 4 wins.
+  if (maxCount >= WIN_LENGTH) {
+    return {
+      result: lastPlayer === Player.X ? GameResult.XWins : GameResult.OWins,
+      winningIndices: maxIndices,
+      losingIndices: [],
+      losingPlayer: null,
+    };
+  }
+
+  // Check loss (exactly 3) - only if no win
   if (maxCount === LOSE_LENGTH) {
     const winner = lastPlayer === Player.X ? Player.O : Player.X;
     return {
@@ -295,16 +307,6 @@ export function checkResultFast(
       winningIndices: [],
       losingIndices: maxIndices,
       losingPlayer: lastPlayer,
-    };
-  }
-
-  // Check win (4+)
-  if (maxCount >= WIN_LENGTH) {
-    return {
-      result: lastPlayer === Player.X ? GameResult.XWins : GameResult.OWins,
-      winningIndices: maxIndices,
-      losingIndices: [],
-      losingPlayer: null,
     };
   }
 

@@ -248,19 +248,18 @@ def check_result(board: Board) -> GameResult:
         x_max = max(x_max, x_count)
         o_max = max(o_max, o_count)
 
-    # Check for exactly 3 (loss) - takes priority over 4+ check
-    # because if you make a move that creates both 3 and 4,
-    # the 3 was created first (you lose)
-    if x_max == LOSE_LENGTH:
-        return GameResult.O_WINS  # X loses = O wins
-    if o_max == LOSE_LENGTH:
-        return GameResult.X_WINS  # O loses = X wins
-
-    # Check for 4+ (win)
+    # 4-beats-3 rule: Check win BEFORE loss.
+    # If a move creates both 4-in-a-row and 3-in-a-row, the 4 wins.
     if x_max >= WIN_LENGTH:
         return GameResult.X_WINS
     if o_max >= WIN_LENGTH:
         return GameResult.O_WINS
+
+    # Check for exactly 3 (loss) - only if no win
+    if x_max == LOSE_LENGTH:
+        return GameResult.O_WINS  # X loses = O wins
+    if o_max == LOSE_LENGTH:
+        return GameResult.X_WINS  # O loses = X wins
 
     # Check for draw (full board)
     if board.is_full():
@@ -308,19 +307,20 @@ def check_result_fast(board: Board, last_move: int) -> GameResult:
 
         max_consecutive = max(max_consecutive, count)
 
-    # Check loss condition first (exactly 3)
-    if max_consecutive == LOSE_LENGTH:
-        if last_player == Player.X:
-            return GameResult.O_WINS
-        else:
-            return GameResult.X_WINS
-
-    # Check win condition (4+)
+    # 4-beats-3 rule: Check win BEFORE loss.
+    # If a move creates both 4-in-a-row and 3-in-a-row, the 4 wins.
     if max_consecutive >= WIN_LENGTH:
         if last_player == Player.X:
             return GameResult.X_WINS
         else:
             return GameResult.O_WINS
+
+    # Check loss condition (exactly 3) - only if no win
+    if max_consecutive == LOSE_LENGTH:
+        if last_player == Player.X:
+            return GameResult.O_WINS
+        else:
+            return GameResult.X_WINS
 
     # Check draw
     if board.is_full():
