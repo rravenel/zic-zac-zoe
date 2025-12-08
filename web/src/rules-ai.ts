@@ -214,3 +214,163 @@ export function isRulesAI(): boolean {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get("rules") === "1";
 }
+
+// =============================================================================
+// Checkmate Detection
+// =============================================================================
+
+/**
+ * Get all 3-in-a-row patterns that would be created if player plays at move
+ */
+export function getThreePatterns(board: BoardState, move: number, player: Player): number[][] {
+  const patterns: number[][] = [];
+  const testBoard = [...board];
+  testBoard[move] = player;
+
+  for (const line of ALL_LINES) {
+    if (!line.includes(move)) continue;
+
+    for (let i = 0; i <= line.length - 3; i++) {
+      const window = [line[i], line[i + 1], line[i + 2]];
+      let count = 0;
+      for (const idx of window) {
+        if (testBoard[idx] === player) count++;
+      }
+      if (count === 3) {
+        patterns.push(window);
+      }
+    }
+  }
+  return patterns;
+}
+
+/**
+ * Get the 4-pattern for a threat cell (opponent's 3 pieces + the empty threat cell)
+ */
+export function getThreatPattern(board: BoardState, threatCell: number, opponent: Player): number[] | null {
+  for (const line of ALL_LINES) {
+    if (!line.includes(threatCell)) continue;
+
+    for (let i = 0; i <= line.length - 4; i++) {
+      const window = [line[i], line[i + 1], line[i + 2], line[i + 3]];
+      if (!window.includes(threatCell)) continue;
+
+      let opponentCount = 0;
+      let emptyCount = 0;
+
+      for (const idx of window) {
+        if (board[idx] === opponent) opponentCount++;
+        else if (board[idx] === EMPTY) emptyCount++;
+      }
+
+      if (opponentCount === 3 && emptyCount === 1) {
+        return window;
+      }
+    }
+  }
+  return null;
+}
+
+export interface CheckmateResult {
+  isCheckmate: boolean;
+  loser: Player | null;
+  // Patterns to highlight
+  threatPatterns: number[][];   // 4-patterns from opponent threats
+  suicidePatterns: number[][];  // 3-patterns from suicide moves
+}
+
+/**
+ * Check if the current player is in checkmate.
+ *
+ * Checkmate conditions (prerequisite: no winning move available):
+ * 1. Suicide block - opponent has 1+ threats, and 1+ blocking cell creates 3-in-a-row
+ * 2. Multiple threats - opponent has 2+ distinct threat cells
+ * 3. All moves suicide - every empty cell creates 3-in-a-row
+ */
+export function detectCheckmate(board: BoardState, currentPlayer: Player): CheckmateResult {
+  const opponent = currentPlayer === Player.X ? Player.O : Player.X;
+  const legalMoves = getLegalMoves(board);
+
+  const noCheckmate: CheckmateResult = {
+    isCheckmate: false,
+    loser: null,
+    threatPatterns: [],
+    suicidePatterns: [],
+  };
+
+  if (legalMoves.length === 0) {
+    return noCheckmate;
+  }
+
+  // Prerequisite: Check if current player has any winning moves
+  for (const move of legalMoves) {
+    if (createsFour(board, move, currentPlayer)) {
+      // Player can win - not checkmate
+      return noCheckmate;
+    }
+  }
+
+  // Find opponent threats
+  const threats = findThreats(board, opponent);
+
+  // Find which moves are suicide (create 3-in-a-row)
+  const suicideMoves = legalMoves.filter(move => createsThree(board, move, currentPlayer));
+
+  // Trigger 1 & 2: Check threat-based checkmate
+  if (threats.length > 0) {
+    // Trigger 2: Multiple threats (can only block one)
+    if (threats.length >= 2) {
+      const threatPatterns: number[][] = [];
+      for (const t of threats) {
+        const pattern = getThreatPattern(board, t, opponent);
+        if (pattern) threatPatterns.push(pattern);
+      }
+      return {
+        isCheckmate: true,
+        loser: currentPlayer,
+        threatPatterns,
+        suicidePatterns: [],
+      };
+    }
+
+    // Trigger 1: Single threat but blocking is suicide
+    // (only compute suicideBlocks when we have exactly 1 threat)
+    const suicideBlocks = threats.filter(t => suicideMoves.includes(t));
+    if (suicideBlocks.length > 0) {
+      const threatPatterns: number[][] = [];
+      const suicidePatterns: number[][] = [];
+
+      for (const t of suicideBlocks) {
+        const threatPattern = getThreatPattern(board, t, opponent);
+        if (threatPattern) threatPatterns.push(threatPattern);
+
+        const threePatterns = getThreePatterns(board, t, currentPlayer);
+        suicidePatterns.push(...threePatterns);
+      }
+
+      return {
+        isCheckmate: true,
+        loser: currentPlayer,
+        threatPatterns,
+        suicidePatterns,
+      };
+    }
+  }
+
+  // Trigger 3: All moves are suicide (no threats needed)
+  if (suicideMoves.length === legalMoves.length) {
+    const suicidePatterns: number[][] = [];
+    for (const move of suicideMoves) {
+      const patterns = getThreePatterns(board, move, currentPlayer);
+      suicidePatterns.push(...patterns);
+    }
+    return {
+      isCheckmate: true,
+      loser: currentPlayer,
+      threatPatterns: [],
+      suicidePatterns,
+    };
+  }
+
+  return noCheckmate;
+}

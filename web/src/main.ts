@@ -18,8 +18,8 @@ import {
   getLegalMoves,
   GameCheckResult,
 } from "./game";
-import { loadModel, getAIMove, Difficulty, getModelIteration, AIResult } from "./ai";
-import { getRulesMove, isRulesAI } from "./rules-ai";
+import { loadModel, getAIMove, Difficulty, getModelIteration } from "./ai";
+import { getRulesMove, isRulesAI, detectCheckmate, CheckmateResult } from "./rules-ai";
 
 // Timing constants (milliseconds)
 const AI_MOVE_DELAY = 500;      // Delay after human move before AI responds
@@ -37,6 +37,7 @@ interface GameState {
   lastMove: number | null;
   result: GameCheckResult | null;
   lastGuardrailWeight: number | null;
+  checkmate: CheckmateResult | null;
 }
 
 const state: GameState = {
@@ -47,6 +48,7 @@ const state: GameState = {
   lastMove: null,
   result: null,
   lastGuardrailWeight: null,
+  checkmate: null,
 };
 
 // =============================================================================
@@ -174,6 +176,18 @@ function createBoardCells(): void {
 function renderBoard(): void {
   const cells = boardEl.querySelectorAll(".cell");
 
+  // Pre-compute checkmate highlight info (avoid recomputing per cell)
+  let checkmateHighlightClass: string | null = null;
+  let checkmateIndices: Set<number> | null = null;
+  if (state.checkmate?.isCheckmate) {
+    const humanWins = state.checkmate.loser !== state.humanPlayer;
+    checkmateHighlightClass = humanWins ? "checkmate-win-highlight" : "checkmate-lose-highlight";
+    // Flatten all pattern indices into a Set for O(1) lookup
+    checkmateIndices = new Set(
+      [...state.checkmate.threatPatterns, ...state.checkmate.suicidePatterns].flat()
+    );
+  }
+
   cells.forEach((cell, i) => {
     const el = cell as HTMLElement;
     const piece = state.board[i];
@@ -184,6 +198,8 @@ function renderBoard(): void {
       "last-move",
       "win-highlight",
       "lose-highlight",
+      "checkmate-win-highlight",
+      "checkmate-lose-highlight",
       "game-over"
     );
 
@@ -216,6 +232,11 @@ function renderBoard(): void {
         el.classList.add("lose-highlight");
       }
     }
+
+    // Checkmate highlights (O(1) lookup via Set)
+    if (checkmateHighlightClass && checkmateIndices?.has(i)) {
+      el.classList.add(checkmateHighlightClass);
+    }
   });
 }
 
@@ -226,7 +247,7 @@ function updateStatus(): void {
   statusEl.classList.remove("thinking", "your-turn", "win", "lose", "draw");
 
   if (state.gameOver && state.result) {
-    const { result, losingPlayer } = state.result;
+    const { result } = state.result;
 
     if (result === GameResult.Draw) {
       statusEl.textContent = "TIE!";
@@ -236,7 +257,11 @@ function updateStatus(): void {
       const winner = result === GameResult.XWins ? Player.X : Player.O;
       const humanWins = winner === state.humanPlayer;
 
-      if (humanWins) {
+      // Check if this was a checkmate
+      if (state.checkmate && state.checkmate.isCheckmate) {
+        statusEl.textContent = "CHECKMATE!!";
+        statusEl.classList.add(humanWins ? "win" : "lose");
+      } else if (humanWins) {
         statusEl.textContent = "YOU WIN!!!";
         statusEl.classList.add("win");
       } else {
@@ -281,6 +306,7 @@ function newGame(): void {
   state.lastMove = null;
   state.result = null;
   state.lastGuardrailWeight = null;
+  state.checkmate = null;
 
   clearStatsPulsing();
   renderBoard();
@@ -324,6 +350,26 @@ function makeHumanMove(index: number): void {
     state.gameOver = true;
     state.result = result;
     recordGameResult(result.result, state.humanPlayer);
+    renderBoard();
+    updateStatus();
+    return;
+  }
+
+  // Check if AI is now checkmated (before they even move)
+  const aiPlayer = state.humanPlayer === Player.X ? Player.O : Player.X;
+  const checkmate = detectCheckmate(state.board, aiPlayer);
+  if (checkmate.isCheckmate) {
+    state.gameOver = true;
+    state.checkmate = checkmate;
+    // AI is checkmated, so human wins
+    const humanWinResult = state.humanPlayer === Player.X ? GameResult.XWins : GameResult.OWins;
+    state.result = {
+      result: humanWinResult,
+      winningIndices: [],
+      losingIndices: [],
+      losingPlayer: aiPlayer,
+    };
+    recordGameResult(humanWinResult, state.humanPlayer);
     renderBoard();
     updateStatus();
     return;
@@ -376,6 +422,25 @@ async function makeAIMove(): Promise<void> {
     state.gameOver = true;
     state.result = result;
     recordGameResult(result.result, state.humanPlayer);
+    renderBoard();
+    updateStatus();
+    return;
+  }
+
+  // Check if human is now checkmated (before they even move)
+  const checkmate = detectCheckmate(state.board, state.humanPlayer);
+  if (checkmate.isCheckmate) {
+    state.gameOver = true;
+    state.checkmate = checkmate;
+    // Human is checkmated, so AI wins
+    const aiWinResult = state.humanPlayer === Player.X ? GameResult.OWins : GameResult.XWins;
+    state.result = {
+      result: aiWinResult,
+      winningIndices: [],
+      losingIndices: [],
+      losingPlayer: state.humanPlayer,
+    };
+    recordGameResult(aiWinResult, state.humanPlayer);
   }
 
   renderBoard();
