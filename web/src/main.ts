@@ -83,8 +83,15 @@ function saveStats(stats: Stats): void {
 const stats: Stats = loadStats();
 
 function updateStatsDisplay(): void {
-  const statsEl = document.getElementById("stats")!;
-  statsEl.textContent = `WON: ${String(stats.won).padStart(3, "0")} - LOST: ${String(stats.lost).padStart(3, "0")}`;
+  const wonEl = document.getElementById("stats-won")!;
+  const lostEl = document.getElementById("stats-lost")!;
+  wonEl.textContent = `WON: ${String(stats.won).padStart(3, "0")}`;
+  lostEl.textContent = `LOST: ${String(stats.lost).padStart(3, "0")}`;
+}
+
+function clearStatsPulsing(): void {
+  document.getElementById("stats-won")?.classList.remove("pulsing");
+  document.getElementById("stats-lost")?.classList.remove("pulsing");
 }
 
 function updateGuardrailDisplay(): void {
@@ -104,13 +111,18 @@ function recordGameResult(result: GameResult, humanPlayer: Player): void {
     return;
   }
   const winner = result === GameResult.XWins ? Player.X : Player.O;
-  if (winner === humanPlayer) {
+  const humanWon = winner === humanPlayer;
+  if (humanWon) {
     stats.won++;
   } else {
     stats.lost++;
   }
   saveStats(stats);
   updateStatsDisplay();
+
+  // Pulse the counter that changed
+  const elementId = humanWon ? "stats-won" : "stats-lost";
+  document.getElementById(elementId)?.classList.add("pulsing");
 }
 
 // =============================================================================
@@ -270,6 +282,7 @@ function newGame(): void {
   state.result = null;
   state.lastGuardrailWeight = null;
 
+  clearStatsPulsing();
   renderBoard();
   updateStatus();
   updateGuardrailDisplay();

@@ -97,6 +97,16 @@ body {
   letter-spacing: 1px;
 }
 
+#stats-won.pulsing,
+#stats-lost.pulsing {
+  animation: stats-pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes stats-pulse {
+  from { opacity: 1; }
+  to { opacity: 0.4; }
+}
+
 /* =============================================================================
    Status Display
    ============================================================================= */
