@@ -15,6 +15,8 @@ import {
   detectCheckmate,
 } from "./rules-ai";
 
+type BoardState = number[];
+
 // =============================================================================
 // Test Utilities
 // =============================================================================
@@ -93,7 +95,7 @@ function testCreatesThree(): void {
   `);
   assert(createsThree(board2, 12, Player.O), "O at index 12 creates vertical 3-in-a-row");
 
-  // Test: Diagonal 3-in-a-row
+  // Test: Diagonal 3-in-a-row (down-right, long diagonal)
   const board3 = boardFromString(`
     X . . . . .
     . X . . . .
@@ -103,6 +105,50 @@ function testCreatesThree(): void {
     . . . . . .
   `);
   assert(createsThree(board3, 14, Player.X), "X at index 14 creates diagonal 3-in-a-row");
+
+  // Test: Short diagonal 2,7,12 (up-right, only 3 cells)
+  const board4 = boardFromString(`
+    . . O . . .
+    . O . . . .
+    . . . . . .
+    . . . . . .
+    . . . . . .
+    . . . . . .
+  `);
+  assert(createsThree(board4, 12, Player.O), "O at index 12 creates short diagonal 2,7,12");
+
+  // Test: Short diagonal 3,10,17 (down-right from col 3)
+  const board5 = boardFromString(`
+    . . . X . .
+    . . . . X .
+    . . . . . .
+    . . . . . .
+    . . . . . .
+    . . . . . .
+  `);
+  assert(createsThree(board5, 17, Player.X), "X at index 17 creates short diagonal 3,10,17");
+
+  // Test: Short diagonal 5,10,15 (down-left from col 5)
+  const board6 = boardFromString(`
+    . . . . . X
+    . . . . X .
+    . . . . . .
+    . . . . . .
+    . . . . . .
+    . . . . . .
+  `);
+  assert(createsThree(board6, 15, Player.X), "X at index 15 creates short diagonal 5,10,15");
+
+  // Test: 2-cell diagonal should NOT trigger 3-in-a-row
+  const board7 = boardFromString(`
+    . . . . . X
+    . . . . . .
+    . . . . . .
+    . . . . . .
+    . . . . . .
+    . . . . . .
+  `);
+  assert(!createsThree(board7, 10, Player.X), "X at index 10 does NOT create 3 (only 2-cell diagonal)");
 }
 
 // =============================================================================
@@ -204,6 +250,44 @@ function testCheckmateT1SuicideBlock(): void {
   assertEqual(result.loser, Player.X, "Loser is X");
   assert(result.threatPatterns.length > 0, "Has threat patterns");
   assert(result.suicidePatterns.length > 0, "Has suicide patterns");
+}
+
+// =============================================================================
+// Tests: detectCheckmate - Short Diagonal Suicide
+// =============================================================================
+
+function testCheckmateShortDiagonal(): void {
+  console.log("\ndetectCheckmate - Short Diagonal Suicide:");
+
+  // Real game scenario: X threatens at 12 (column 0: 0,6,12,18)
+  // O must block at 12, but that creates O's 3-in-a-row on short diagonal 2,7,12
+  // Board from screenshot:
+  // X . O X . .
+  // X O . O . .
+  // . . X . . .
+  // X O . X . .
+  // . . . . . .
+  // . . . . . O
+  const board = boardFromString(`
+    X . O X . .
+    X O . O . .
+    . . X . . .
+    X O . X . .
+    . . . . . .
+    . . . . . O
+  `);
+
+  // Verify the setup: X has threat at 12
+  const xThreats = findThreats(board, Player.X);
+  assert(xThreats.includes(12), "X threatens at 12 (column 0)");
+
+  // Verify: O playing at 12 creates 3-in-a-row (diagonal 2,7,12)
+  assert(createsThree(board, 12, Player.O), "O at 12 creates 3-in-a-row (diagonal 2,7,12)");
+
+  // O should be in checkmate
+  const result = detectCheckmate(board, Player.O);
+  assert(result.isCheckmate, "O is in checkmate (short diagonal suicide)");
+  assertEqual(result.loser, Player.O, "Loser is O");
 }
 
 // =============================================================================
@@ -380,6 +464,7 @@ function runTests(): void {
   testGetThreePatterns();
   testGetThreatPattern();
   testCheckmateT1SuicideBlock();
+  testCheckmateShortDiagonal();
   testCheckmateT2MultipleThreats();
   testCheckmateT3AllSuicide();
   testNotCheckmate();

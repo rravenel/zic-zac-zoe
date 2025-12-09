@@ -12,57 +12,69 @@ import { BoardState, Player, BOARD_SIZE, getLegalMoves } from "./game";
 
 const EMPTY = Player.Empty;
 
-// All lines of length 4+ on the 6x6 board
+// All lines of length 3+ on the 6x6 board (need 3 for suicide detection, 4 for wins)
 const ALL_LINES: number[][] = [];
 
 // Generate all lines at module load
 function initLines(): void {
-  // Horizontal lines
+  // Horizontal lines (full rows)
   for (let row = 0; row < BOARD_SIZE; row++) {
-    for (let startCol = 0; startCol <= BOARD_SIZE - 4; startCol++) {
-      const line: number[] = [];
-      for (let col = startCol; col < BOARD_SIZE; col++) {
-        line.push(row * BOARD_SIZE + col);
-      }
-      ALL_LINES.push(line);
+    const line: number[] = [];
+    for (let col = 0; col < BOARD_SIZE; col++) {
+      line.push(row * BOARD_SIZE + col);
     }
+    ALL_LINES.push(line);
   }
 
-  // Vertical lines
+  // Vertical lines (full columns)
   for (let col = 0; col < BOARD_SIZE; col++) {
-    for (let startRow = 0; startRow <= BOARD_SIZE - 4; startRow++) {
-      const line: number[] = [];
-      for (let row = startRow; row < BOARD_SIZE; row++) {
-        line.push(row * BOARD_SIZE + col);
-      }
-      ALL_LINES.push(line);
+    const line: number[] = [];
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      line.push(row * BOARD_SIZE + col);
     }
+    ALL_LINES.push(line);
   }
 
-  // Diagonal down-right (\)
-  for (let startRow = 0; startRow <= BOARD_SIZE - 4; startRow++) {
-    for (let startCol = 0; startCol <= BOARD_SIZE - 4; startCol++) {
-      const line: number[] = [];
-      let r = startRow, c = startCol;
-      while (r < BOARD_SIZE && c < BOARD_SIZE) {
-        line.push(r * BOARD_SIZE + c);
-        r++; c++;
-      }
-      if (line.length >= 4) ALL_LINES.push(line);
+  // Diagonal down-right (\) - all diagonals with length >= 3
+  // Start from top row and left column
+  for (let startCol = 0; startCol < BOARD_SIZE; startCol++) {
+    const line: number[] = [];
+    let r = 0, c = startCol;
+    while (r < BOARD_SIZE && c < BOARD_SIZE) {
+      line.push(r * BOARD_SIZE + c);
+      r++; c++;
     }
+    if (line.length >= 3) ALL_LINES.push(line);
+  }
+  for (let startRow = 1; startRow < BOARD_SIZE; startRow++) {
+    const line: number[] = [];
+    let r = startRow, c = 0;
+    while (r < BOARD_SIZE && c < BOARD_SIZE) {
+      line.push(r * BOARD_SIZE + c);
+      r++; c++;
+    }
+    if (line.length >= 3) ALL_LINES.push(line);
   }
 
-  // Diagonal up-right (/)
-  for (let startRow = 3; startRow < BOARD_SIZE; startRow++) {
-    for (let startCol = 0; startCol <= BOARD_SIZE - 4; startCol++) {
-      const line: number[] = [];
-      let r = startRow, c = startCol;
-      while (r >= 0 && c < BOARD_SIZE) {
-        line.push(r * BOARD_SIZE + c);
-        r--; c++;
-      }
-      if (line.length >= 4) ALL_LINES.push(line);
+  // Diagonal up-right (/) - all diagonals with length >= 3
+  // Start from bottom row and left column
+  for (let startCol = 0; startCol < BOARD_SIZE; startCol++) {
+    const line: number[] = [];
+    let r = BOARD_SIZE - 1, c = startCol;
+    while (r >= 0 && c < BOARD_SIZE) {
+      line.push(r * BOARD_SIZE + c);
+      r--; c++;
     }
+    if (line.length >= 3) ALL_LINES.push(line);
+  }
+  for (let startRow = BOARD_SIZE - 2; startRow >= 0; startRow--) {
+    const line: number[] = [];
+    let r = startRow, c = 0;
+    while (r >= 0 && c < BOARD_SIZE) {
+      line.push(r * BOARD_SIZE + c);
+      r--; c++;
+    }
+    if (line.length >= 3) ALL_LINES.push(line);
   }
 }
 
