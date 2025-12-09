@@ -198,6 +198,8 @@ function renderBoard(): void {
       "last-move",
       "win-highlight",
       "lose-highlight",
+      "winning-move",
+      "losing-move",
       "checkmate-win-highlight",
       "checkmate-lose-highlight",
       "game-over"
@@ -225,11 +227,23 @@ function renderBoard(): void {
 
     // Win/lose highlights
     if (state.result) {
-      if (state.result.winningIndices.includes(i)) {
+      const isWinCell = state.result.winningIndices.includes(i);
+      const isLoseCell = state.result.losingIndices.includes(i);
+      const isLastMove = i === state.lastMove;
+
+      if (isWinCell) {
         el.classList.add("win-highlight");
+        // Mark the winning move (the cell that completed the 4-in-a-row)
+        if (isLastMove) {
+          el.classList.add("winning-move");
+        }
       }
-      if (state.result.losingIndices.includes(i)) {
+      if (isLoseCell) {
         el.classList.add("lose-highlight");
+        // Mark the losing move (the cell that caused 3-in-a-row)
+        if (isLastMove) {
+          el.classList.add("losing-move");
+        }
       }
     }
 

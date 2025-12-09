@@ -5,26 +5,26 @@
 /* Import retro pixel font */
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-/* CSS Variables */
+/* CSS Variables - Vector Storm Palette */
 :root {
   --color-bg: #0a0a0a;
-  --color-primary: #00ffff;
-  --color-secondary: #ff00ff;
-  --color-win: #00ff00;
-  --color-lose: #ff0000;
+  --color-primary: #4488ff;
+  --color-secondary: #44ff44;
+  --color-win: #00ffff;
+  --color-lose: #ff4444;
   --color-text: #ffffff;
-  --color-turn: #ffcc00;
-  --color-dim: #888888;
+  --color-turn: #ffaa00;
+  --color-dim: #667788;
   --color-cell-bg: #1a1a2e;
-  --color-cell-border: #00ffff;
-  --color-x: #00ffff;
-  --color-o: #ff00ff;
+  --color-cell-border: #334466;
+  --color-x: #4488ff;
+  --color-o: #44ff44;
 
-  --glow-board: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
-  --glow-btn: 0 0 8px rgba(0, 255, 255, 0.5);
-  --glow-btn-secondary: 0 0 8px rgba(255, 0, 255, 0.5);
-  --glow-win-cell: 0 0 5px #00ff00, 0 0 10px #00ff00;
-  --glow-lose-cell: 0 0 5px #ff0000, 0 0 10px #ff0000;
+  --glow-board: 0 0 10px #4488ff, 0 0 20px #4488ff, 0 0 30px #4488ff;
+  --glow-btn: 0 0 8px rgba(68, 136, 255, 0.5);
+  --glow-btn-secondary: 0 0 8px rgba(68, 255, 68, 0.5);
+  --glow-win-cell: 0 0 5px #00ffff, 0 0 10px #00ffff;
+  --glow-lose-cell: 0 0 5px #ff4444, 0 0 10px #ff4444;
 
   --font-arcade: 'Press Start 2P', monospace;
 }
@@ -170,7 +170,7 @@ body {
   background: linear-gradient(135deg, #1a1a2e 0%, #0a0a1a 100%);
   border: 3px solid var(--color-primary);
   border-radius: 8px;
-  box-shadow: var(--glow-board), inset 0 0 20px rgba(0, 255, 255, 0.1);
+  box-shadow: var(--glow-board), inset 0 0 20px rgba(68, 136, 255, 0.1);
 }
 
 .cell {
@@ -226,17 +226,17 @@ body {
 /* Last move highlight - matches token color */
 .cell.last-move:has(.piece.x) {
   border-color: var(--color-x);
-  box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.3);
+  box-shadow: inset 0 0 15px rgba(68, 136, 255, 0.4);
 }
 
 .cell.last-move:has(.piece.o) {
   border-color: var(--color-o);
-  box-shadow: inset 0 0 15px rgba(255, 0, 255, 0.3);
+  box-shadow: inset 0 0 15px rgba(68, 255, 68, 0.4);
 }
 
 /* Win highlight (4 in a row) */
 .cell.win-highlight {
-  background-color: rgba(0, 255, 0, 0.2);
+  background-color: rgba(0, 255, 255, 0.15);
   border-color: var(--color-win);
   box-shadow: var(--glow-win-cell);
   animation: win-pulse 0.5s ease-in-out infinite alternate;
@@ -246,9 +246,27 @@ body {
   color: var(--color-win);
 }
 
+/* Winning move - the cell that completed the win */
+.cell.winning-move {
+  background-color: rgba(255, 255, 255, 0.25);
+  border: 3px solid #ffffff;
+  box-shadow:
+    0 0 10px #ffffff,
+    0 0 20px #00ffff,
+    0 0 40px #00ffff,
+    inset 0 0 15px rgba(255, 255, 255, 0.3);
+  animation: winning-move-pulse 0.3s ease-in-out infinite alternate;
+}
+
+.cell.winning-move .piece {
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+  animation: winning-piece-pulse 0.3s ease-in-out infinite alternate;
+}
+
 /* Lose highlight (3 in a row) */
 .cell.lose-highlight {
-  background-color: rgba(255, 0, 0, 0.2);
+  background-color: rgba(255, 68, 68, 0.15);
   border-color: var(--color-lose);
   box-shadow: var(--glow-lose-cell);
   animation: lose-pulse 0.5s ease-in-out infinite alternate;
@@ -258,27 +276,91 @@ body {
   color: var(--color-lose);
 }
 
+/* Losing move - the cell that caused the 3-in-a-row */
+.cell.losing-move {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 3px solid #ffffff;
+  box-shadow:
+    0 0 10px #ffffff,
+    0 0 20px #ff4444,
+    0 0 40px #ff4444,
+    inset 0 0 15px rgba(255, 255, 255, 0.2);
+  animation: losing-move-pulse 0.3s ease-in-out infinite alternate;
+}
+
+.cell.losing-move .piece {
+  color: #ffffff;
+  text-shadow: 0 0 10px #ff4444, 0 0 20px #ff4444;
+  animation: losing-piece-pulse 0.3s ease-in-out infinite alternate;
+}
+
 @keyframes win-pulse {
-  from { box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; }
-  to { box-shadow: 0 0 15px #00ff00, 0 0 30px #00ff00; }
+  from { box-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff; }
+  to { box-shadow: 0 0 15px #00ffff, 0 0 25px #00ffff; }
+}
+
+@keyframes winning-move-pulse {
+  from {
+    box-shadow:
+      0 0 10px #ffffff,
+      0 0 20px #00ffff,
+      0 0 40px #00ffff,
+      inset 0 0 15px rgba(255, 255, 255, 0.3);
+  }
+  to {
+    box-shadow:
+      0 0 15px #ffffff,
+      0 0 30px #00ffff,
+      0 0 60px #00ffff,
+      inset 0 0 20px rgba(255, 255, 255, 0.5);
+  }
+}
+
+@keyframes winning-piece-pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.15); }
 }
 
 @keyframes lose-pulse {
-  from { box-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000; }
-  to { box-shadow: 0 0 15px #ff0000, 0 0 30px #ff0000; }
+  from { box-shadow: 0 0 5px #ff4444, 0 0 10px #ff4444; }
+  to { box-shadow: 0 0 15px #ff4444, 0 0 25px #ff4444; }
 }
 
-/* Checkmate highlights - green when human wins, red when human loses */
+@keyframes losing-move-pulse {
+  from {
+    box-shadow:
+      0 0 10px #ffffff,
+      0 0 20px #ff4444,
+      0 0 40px #ff4444,
+      inset 0 0 15px rgba(255, 255, 255, 0.2);
+  }
+  to {
+    box-shadow:
+      0 0 15px #ffffff,
+      0 0 30px #ff4444,
+      0 0 60px #ff4444,
+      inset 0 0 20px rgba(255, 255, 255, 0.4);
+  }
+}
+
+@keyframes losing-piece-pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+
+/* Checkmate highlights - cyan when human wins, red when human loses */
 .cell.checkmate-win-highlight {
-  background-color: rgba(0, 255, 0, 0.2);
+  background-color: rgba(0, 255, 255, 0.15);
   border-color: var(--color-win);
-  box-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+  animation: win-pulse 0.5s ease-in-out infinite alternate;
 }
 
 .cell.checkmate-lose-highlight {
-  background-color: rgba(255, 0, 0, 0.2);
+  background-color: rgba(255, 68, 68, 0.15);
   border-color: var(--color-lose);
-  box-shadow: 0 0 8px rgba(255, 0, 0, 0.5);
+  box-shadow: 0 0 8px rgba(255, 68, 68, 0.5);
+  animation: lose-pulse 0.5s ease-in-out infinite alternate;
 }
 
 /* =============================================================================

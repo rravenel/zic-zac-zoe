@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zic-Zac-Zoe - UI Mockups</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-arcade: 'Press Start 2P', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: var(--font-arcade);
+      min-height: 100vh;
+      padding: 20px;
+      background-image:
+        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.03));
+      background-size: 100% 4px, 3px 100%;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #00ffff;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 10px;
+      color: #888;
+      margin-bottom: 30px;
+    }
+
+    /* Navigation */
+    .nav {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      font-family: var(--font-arcade);
+      font-size: 10px;
+      padding: 10px 15px;
+      background: #1a1a2e;
+      border: 2px solid #444;
+      color: #888;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      border-color: #00ffff;
+      color: #00ffff;
+    }
+
+    .nav-btn.active {
+      border-color: #00ffff;
+      color: #00ffff;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+
+    /* Sections */
+    .section {
+      display: none;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    .section-title {
+      font-size: 16px;
+      color: #ff00ff;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    /* Palette Display */
+    .palettes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: center;
+    }
+
+    .palette-card {
+      background: #111;
+      border: 2px solid #333;
+      padding: 20px;
+      width: 350px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .palette-card:hover {
+      border-color: #666;
+    }
+
+    .palette-card.selected {
+      border-color: #00ffff;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+    }
+
+    .palette-name {
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .palette-inspiration {
+      font-size: 8px;
+      color: #666;
+      margin-bottom: 15px;
+    }
+
+    .color-swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .swatch {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #333;
+      position: relative;
+    }
+
+    .swatch-label {
+      font-size: 6px;
+      color: #888;
+      margin-top: 2px;
+      text-align: center;
+    }
+
+    .swatch-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Mini Board Preview */
+    .mini-board {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 2px;
+      width: 180px;
+      margin: 0 auto;
+    }
+
+    .mini-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1px solid;
+    }
+
+    /* Full Mockup Display */
+    .mockup-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      justify-content: center;
+    }
+
+    .mockup {
+      background: #0a0a0a;
+      padding: 20px;
+      border: 2px solid #333;
+      text-align: center;
+    }
+
+    .mockup-label {
+      font-size: 10px;
+      color: #888;
+      margin-bottom: 15px;
+    }
+
+    .mockup-status {
+      font-size: 16px;
+      margin-bottom: 15px;
+      min-height: 30px;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+      width: 240px;
+      padding: 8px;
+      margin: 0 auto;
+      border: 3px solid;
+      border-radius: 8px;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+      border: 2px solid;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    /* State selector */
+    .state-selector {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .state-btn {
+      font-family: var(--font-arcade);
+      font-size: 9px;
+      padding: 8px 12px;
+      background: #1a1a2e;
+      border: 2px solid #444;
+      color: #888;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .state-btn:hover {
+      border-color: #888;
+      color: #fff;
+    }
+
+    .state-btn.active {
+      border-color: #ff00ff;
+      color: #ff00ff;
+    }
+
+    /* Comparison view */
+    .comparison {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .comparison-card {
+      text-align: center;
+    }
+
+    .comparison-label {
+      font-size: 8px;
+      color: #888;
+      margin-bottom: 10px;
+    }
+
+    /* Notes section */
+    .notes {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 25px;
+      background: #111;
+      border: 1px solid #333;
+      font-size: 12px;
+      line-height: 2;
+      color: #aaa;
+    }
+
+    .notes h3 {
+      font-size: 14px;
+      color: #ff00ff;
+      margin-bottom: 15px;
+    }
+
+    .notes ul {
+      margin-left: 25px;
+    }
+
+    .notes li {
+      margin-bottom: 8px;
+    }
+
+    .highlight {
+      color: #00ffff;
+    }
+  </style>
+</head>
+<body>
+  <h1>ZIC-ZAC-ZOE</h1>
+  <p class="subtitle">UI MOCKUPS & COLOR PALETTES</p>
+
+  <nav class="nav">
+    <button class="nav-btn active" data-section="palettes">PALETTES</button>
+    <button class="nav-btn" data-section="states">GAME STATES</button>
+    <button class="nav-btn" data-section="comparison">COMPARISON</button>
+    <button class="nav-btn" data-section="details">DESIGN NOTES</button>
+  </nav>
+
+  <!-- PALETTES SECTION -->
+  <section id="palettes" class="section active">
+    <h2 class="section-title">COLOR PALETTES</h2>
+    <p style="text-align: center; font-size: 8px; color: #666; margin-bottom: 20px;">CLICK A PALETTE TO SELECT IT FOR PREVIEWS</p>
+
+    <div class="palettes">
+      <!-- Palette 1: Galaga Classic -->
+      <div class="palette-card selected" data-palette="galaga">
+        <div class="palette-name" style="color: #00ffff;">GALAGA CLASSIC</div>
+        <div class="palette-inspiration">Inspired by: Galaga, Galaxian, Space Invaders</div>
+        <div class="color-swatches">
+          <div class="swatch-row">
+            <div class="swatch" style="background: #00ffff; box-shadow: 0 0 10px #00ffff;"></div>
+            <div class="swatch-label">CYAN</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #ff00ff; box-shadow: 0 0 10px #ff00ff;"></div>
+            <div class="swatch-label">MAGENTA</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #ffff00; box-shadow: 0 0 10px #ffff00;"></div>
+            <div class="swatch-label">YELLOW</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #ff6600; box-shadow: 0 0 10px #ff6600;"></div>
+            <div class="swatch-label">ORANGE</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #00ff00; box-shadow: 0 0 10px #00ff00;"></div>
+            <div class="swatch-label">WIN</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #ff0000; box-shadow: 0 0 10px #ff0000;"></div>
+            <div class="swatch-label">LOSE</div>
+          </div>
+        </div>
+        <div class="mini-board" id="mini-galaga"></div>
+      </div>
+
+      <!-- Palette 2: Vector Storm -->
+      <div class="palette-card" data-palette="vector">
+        <div class="palette-name" style="color: #4488ff;">VECTOR STORM</div>
+        <div class="palette-inspiration">Inspired by: Tempest, Star Wars, Asteroids</div>
+        <div class="color-swatches">
+          <div class="swatch-row">
+            <div class="swatch" style="background: #4488ff; box-shadow: 0 0 10px #4488ff;"></div>
+            <div class="swatch-label">BLUE</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #44ff44; box-shadow: 0 0 10px #44ff44;"></div>
+            <div class="swatch-label">GREEN</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #ffaa00; box-shadow: 0 0 10px #ffaa00;"></div>
+            <div class="swatch-label">AMBER</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #aa44ff; box-shadow: 0 0 10px #aa44ff;"></div>
+            <div class="swatch-label">PURPLE</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #00ffff; box-shadow: 0 0 10px #00ffff;"></div>
+            <div class="swatch-label">WIN</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #ff4444; box-shadow: 0 0 10px #ff4444;"></div>
+            <div class="swatch-label">LOSE</div>
+          </div>
+        </div>
+        <div class="mini-board" id="mini-vector"></div>
+      </div>
+
+      <!-- Palette 3: Phoenix Rising -->
+      <div class="palette-card" data-palette="phoenix">
+        <div class="palette-name" style="color: #ff8800;">PHOENIX RISING</div>
+        <div class="palette-inspiration">Inspired by: Phoenix, Defender, Robotron</div>
+        <div class="color-swatches">
+          <div class="swatch-row">
+            <div class="swatch" style="background: #ff8800; box-shadow: 0 0 10px #ff8800;"></div>
+            <div class="swatch-label">ORANGE</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #9944ff; box-shadow: 0 0 10px #9944ff;"></div>
+            <div class="swatch-label">PURPLE</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #00ddff; box-shadow: 0 0 10px #00ddff;"></div>
+            <div class="swatch-label">CYAN</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #ff44aa; box-shadow: 0 0 10px #ff44aa;"></div>
+            <div class="swatch-label">PINK</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #44ff88; box-shadow: 0 0 10px #44ff88;"></div>
+            <div class="swatch-label">WIN</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #ff2244; box-shadow: 0 0 10px #ff2244;"></div>
+            <div class="swatch-label">LOSE</div>
+          </div>
+        </div>
+        <div class="mini-board" id="mini-phoenix"></div>
+      </div>
+
+      <!-- Palette 4: Neon Warfare -->
+      <div class="palette-card" data-palette="neon">
+        <div class="palette-name" style="color: #ff00aa;">NEON WARFARE</div>
+        <div class="palette-inspiration">Inspired by: Tron, Geometry Wars, modern retro</div>
+        <div class="color-swatches">
+          <div class="swatch-row">
+            <div class="swatch" style="background: #ff00aa; box-shadow: 0 0 10px #ff00aa;"></div>
+            <div class="swatch-label">PINK</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #00aaff; box-shadow: 0 0 10px #00aaff;"></div>
+            <div class="swatch-label">BLUE</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #aaff00; box-shadow: 0 0 10px #aaff00;"></div>
+            <div class="swatch-label">LIME</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #ffaa00; box-shadow: 0 0 10px #ffaa00;"></div>
+            <div class="swatch-label">GOLD</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #00ffaa; box-shadow: 0 0 10px #00ffaa;"></div>
+            <div class="swatch-label">WIN</div>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch" style="background: #ff3366; box-shadow: 0 0 10px #ff3366;"></div>
+            <div class="swatch-label">LOSE</div>
+          </div>
+        </div>
+        <div class="mini-board" id="mini-neon"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME STATES SECTION -->
+  <section id="states" class="section">
+    <h2 class="section-title">GAME STATES</h2>
+
+    <div class="state-selector">
+      <button class="state-btn active" data-state="your-turn">YOUR TURN</button>
+      <button class="state-btn" data-state="ai-thinking">AI THINKING</button>
+      <button class="state-btn" data-state="you-win">YOU WIN</button>
+      <button class="state-btn" data-state="you-lose">YOU LOSE</button>
+      <button class="state-btn" data-state="checkmate-win">CHECKMATE (WIN)</button>
+      <button class="state-btn" data-state="checkmate-lose">CHECKMATE (LOSE)</button>
+      <button class="state-btn" data-state="draw">DRAW</button>
+    </div>
+
+    <div class="mockup-container" id="state-mockups">
+      <!-- Populated by JS -->
+    </div>
+  </section>
+
+  <!-- COMPARISON SECTION -->
+  <section id="comparison" class="section">
+    <h2 class="section-title">SIDE-BY-SIDE COMPARISON</h2>
+    <p style="text-align: center; font-size: 8px; color: #666; margin-bottom: 20px;">ALL PALETTES - CHECKMATE (LOSE) STATE</p>
+
+    <div class="comparison" id="comparison-boards">
+      <!-- Populated by JS -->
+    </div>
+  </section>
+
+  <!-- DESIGN NOTES SECTION -->
+  <section id="details" class="section">
+    <h2 class="section-title">DESIGN NOTES</h2>
+
+    <div class="notes">
+      <h3>COLOR ROLE ASSIGNMENTS</h3>
+      <ul>
+        <li><span class="highlight">X Token:</span> Primary color (player identity)</li>
+        <li><span class="highlight">O Token:</span> Secondary color (opponent identity)</li>
+        <li><span class="highlight">Your Turn:</span> Accent color 1 (attention-grabbing)</li>
+        <li><span class="highlight">Last Move:</span> Border glow matching token color</li>
+        <li><span class="highlight">Win Highlight:</span> Dedicated win color (typically green spectrum)</li>
+        <li><span class="highlight">Lose Highlight:</span> Dedicated lose color (typically red spectrum)</li>
+        <li><span class="highlight">Checkmate Patterns:</span> Pulsing animation with win/lose colors</li>
+      </ul>
+    </div>
+
+    <div class="notes">
+      <h3>KEY IMPROVEMENTS FROM CURRENT UI</h3>
+      <ul>
+        <li><span class="highlight">Token Differentiation:</span> X and O now have distinct, high-contrast colors instead of both being cyan/magenta</li>
+        <li><span class="highlight">Win State Clarity:</span> Winning 4-in-a-row uses dedicated win color, not token color</li>
+        <li><span class="highlight">Last Move Visibility:</span> Last move highlight matches the token that moved (not a fixed color)</li>
+        <li><span class="highlight">Checkmate Communication:</span> Threat patterns and suicide patterns shown in contrasting colors</li>
+        <li><span class="highlight">"Your Turn" Integration:</span> Uses palette accent color instead of random yellow</li>
+      </ul>
+    </div>
+
+    <div class="notes">
+      <h3>PALETTE RECOMMENDATIONS</h3>
+      <ul>
+        <li><span class="highlight">Galaga Classic:</span> Closest to current style, safest choice, very readable</li>
+        <li><span class="highlight">Vector Storm:</span> More unique, softer contrast, vector game aesthetic</li>
+        <li><span class="highlight">Phoenix Rising:</span> Warm/energetic, distinctive orange/purple combo</li>
+        <li><span class="highlight">Neon Warfare:</span> Modern retro, high energy, very vibrant</li>
+      </ul>
+    </div>
+
+    <div class="notes">
+      <h3>CHECKMATE VISUAL STRATEGY</h3>
+      <ul>
+        <li><span class="highlight">Threat Patterns:</span> Show opponent's 3-of-4 patterns that forced the checkmate</li>
+        <li><span class="highlight">Suicide Patterns:</span> Show the 3-in-a-row that would be created by blocking</li>
+        <li><span class="highlight">Animation:</span> Pulsing glow draws attention to the tactical situation</li>
+        <li><span class="highlight">Status Message:</span> "CHECKMATE!!" with win/lose color</li>
+      </ul>
+    </div>
+  </section>
+
+  <script>
+    // Palette definitions
+    const palettes = {
+      galaga: {
+        name: 'Galaga Classic',
+        x: '#00ffff',
+        o: '#ff00ff',
+        board: '#00ffff',
+        cell: '#1a1a2e',
+        cellBorder: '#444488',
+        yourTurn: '#ffff00',
+        win: '#00ff00',
+        lose: '#ff0000',
+        lastMoveGlow: 0.4,
+      },
+      vector: {
+        name: 'Vector Storm',
+        x: '#4488ff',
+        o: '#44ff44',
+        board: '#4488ff',
+        cell: '#1a1a2e',
+        cellBorder: '#334466',
+        yourTurn: '#ffaa00',
+        win: '#00ffff',
+        lose: '#ff4444',
+        lastMoveGlow: 0.5,
+      },
+      phoenix: {
+        name: 'Phoenix Rising',
+        x: '#ff8800',
+        o: '#9944ff',
+        board: '#ff8800',
+        cell: '#1a1a2e',
+        cellBorder: '#443322',
+        yourTurn: '#00ddff',
+        win: '#44ff88',
+        lose: '#ff2244',
+        lastMoveGlow: 0.5,
+      },
+      neon: {
+        name: 'Neon Warfare',
+        x: '#00aaff',
+        o: '#ff00aa',
+        board: '#ff00aa',
+        cell: '#1a1a2e',
+        cellBorder: '#442244',
+        yourTurn: '#aaff00',
+        win: '#00ffaa',
+        lose: '#ff3366',
+        lastMoveGlow: 0.5,
+      }
+    };
+
+    let selectedPalette = 'galaga';
+    let selectedState = 'your-turn';
+
+    // Board states for mockups
+    const boardStates = {
+      'your-turn': {
+        status: 'YOUR TURN',
+        statusColor: 'yourTurn',
+        board: [
+          '', 'X', 'O', '', '', '',
+          '', '', 'X', '', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', ''
+        ],
+        lastMove: 8,
+        highlights: {}
+      },
+      'ai-thinking': {
+        status: '',
+        statusColor: 'x',
+        statusClass: 'thinking',
+        board: [
+          '', 'X', 'O', '', '', '',
+          '', '', 'X', 'O', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', ''
+        ],
+        lastMove: 9,
+        highlights: {}
+      },
+      'you-win': {
+        status: 'YOU WIN!!!',
+        statusColor: 'win',
+        board: [
+          'X', 'X', 'X', 'X', 'O', '',
+          '', '', '', '', 'O', '',
+          '', '', '', 'O', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', ''
+        ],
+        lastMove: 3,
+        highlights: { win: [0, 1, 2, 3] }
+      },
+      'you-lose': {
+        status: 'GAME OVER',
+        statusColor: 'lose',
+        board: [
+          'X', 'X', '', 'O', '', '',
+          '', '', '', 'O', '', '',
+          '', '', '', 'O', '', '',
+          'X', '', '', 'O', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', ''
+        ],
+        lastMove: 21,
+        highlights: { win: [3, 9, 15, 21], lose: [0, 1, 18] }
+      },
+      'checkmate-win': {
+        status: 'CHECKMATE!!',
+        statusColor: 'win',
+        board: [
+          'X', 'X', 'X', '', '', '',
+          '', '', '', 'O', '', '',
+          '', '', '', 'O', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', ''
+        ],
+        lastMove: 2,
+        highlights: {
+          checkmateWin: [3, 9, 15],  // O's threat pattern
+          checkmateWin2: [0, 1, 2, 3] // X's winning setup
+        }
+      },
+      'checkmate-lose': {
+        status: 'CHECKMATE!!',
+        statusColor: 'lose',
+        board: [
+          'O', 'O', 'O', '', '', '',
+          '', '', '', 'X', '', '',
+          '', '', '', 'X', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', ''
+        ],
+        lastMove: 2,
+        highlights: {
+          checkmateLose: [0, 1, 2, 3],  // O's threat
+          checkmateLose2: [3, 9, 15]     // X's suicide if blocking
+        }
+      },
+      'draw': {
+        status: 'TIE!',
+        statusColor: 'yourTurn',
+        board: [
+          'X', 'O', 'X', 'O', 'X', 'O',
+          'O', 'X', 'O', 'X', 'O', 'X',
+          'X', 'O', 'X', 'O', 'X', 'O',
+          'O', 'X', 'O', 'X', 'O', 'X',
+          'X', 'O', 'X', 'O', 'X', 'O',
+          'O', 'X', 'O', 'X', 'O', 'X'
+        ],
+        lastMove: 35,
+        highlights: {}
+      }
+    };
+
+    // Render a board with given palette and state
+    function renderBoard(containerId, palette, state, size = 'normal') {
+      const p = palettes[palette];
+      const s = boardStates[state];
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const cellSize = size === 'mini' ? '25px' : '35px';
+      const fontSize = size === 'mini' ? '10px' : '16px';
+      const gap = size === 'mini' ? '2px' : '4px';
+      const padding = size === 'mini' ? '4px' : '8px';
+      const borderWidth = size === 'mini' ? '2px' : '3px';
+
+      let html = `
+        <div style="
+          display: grid;
+          grid-template-columns: repeat(6, ${cellSize});
+          gap: ${gap};
+          padding: ${padding};
+          background: linear-gradient(135deg, #1a1a2e 0%, #0a0a1a 100%);
+          border: ${borderWidth} solid ${p.board};
+          border-radius: 8px;
+          box-shadow: 0 0 10px ${p.board}, 0 0 20px ${p.board};
+        ">
+      `;
+
+      for (let i = 0; i < 36; i++) {
+        const piece = s.board[i];
+        const isLastMove = i === s.lastMove;
+        const isWinHighlight = s.highlights.win?.includes(i);
+        const isLoseHighlight = s.highlights.lose?.includes(i);
+        const isCheckmateWin = s.highlights.checkmateWin?.includes(i) || s.highlights.checkmateWin2?.includes(i);
+        const isCheckmateLose = s.highlights.checkmateLose?.includes(i) || s.highlights.checkmateLose2?.includes(i);
+
+        let bgColor = p.cell;
+        let borderColor = p.cellBorder;
+        let boxShadow = 'none';
+        let pieceColor = piece === 'X' ? p.x : p.o;
+
+        if (isWinHighlight) {
+          bgColor = `${p.win}33`;
+          borderColor = p.win;
+          boxShadow = `0 0 10px ${p.win}`;
+          pieceColor = p.win;
+        } else if (isLoseHighlight) {
+          bgColor = `${p.lose}33`;
+          borderColor = p.lose;
+          boxShadow = `0 0 10px ${p.lose}`;
+          pieceColor = p.lose;
+        } else if (isCheckmateWin) {
+          bgColor = `${p.win}22`;
+          borderColor = p.win;
+          boxShadow = `0 0 8px ${p.win}88`;
+        } else if (isCheckmateLose) {
+          bgColor = `${p.lose}22`;
+          borderColor = p.lose;
+          boxShadow = `0 0 8px ${p.lose}88`;
+        } else if (isLastMove && piece) {
+          borderColor = pieceColor;
+          boxShadow = `inset 0 0 15px ${pieceColor}${Math.round(p.lastMoveGlow * 255).toString(16).padStart(2, '0')}`;
+        }
+
+        html += `
+          <div style="
+            width: ${cellSize};
+            height: ${cellSize};
+            background: ${bgColor};
+            border: 2px solid ${borderColor};
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: ${fontSize};
+            font-weight: bold;
+            color: ${pieceColor};
+            box-shadow: ${boxShadow};
+          ">${piece}</div>
+        `;
+      }
+
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // Render status message
+    function renderStatus(palette, state) {
+      const p = palettes[palette];
+      const s = boardStates[state];
+      const color = p[s.statusColor] || '#fff';
+      const animation = s.statusClass === 'thinking' ? 'animation: pulse 1s infinite;' : '';
+      return `<div style="color: ${color}; ${animation}">${s.status}</div>`;
+    }
+
+    // Render mini boards for palette cards
+    function renderMiniBoardsForPalettes() {
+      Object.keys(palettes).forEach(paletteKey => {
+        renderBoard(`mini-${paletteKey}`, paletteKey, 'you-win', 'mini');
+      });
+    }
+
+    // Render state mockups
+    function renderStateMockups() {
+      const container = document.getElementById('state-mockups');
+      const p = palettes[selectedPalette];
+      const s = boardStates[selectedState];
+
+      container.innerHTML = `
+        <div class="mockup">
+          <div class="mockup-label">${p.name.toUpperCase()}</div>
+          <div class="mockup-status" style="font-size: 20px;">
+            ${renderStatus(selectedPalette, selectedState)}
+          </div>
+          <div id="main-mockup-board"></div>
+        </div>
+      `;
+
+      renderBoard('main-mockup-board', selectedPalette, selectedState);
+    }
+
+    // Render comparison boards
+    function renderComparisonBoards() {
+      const container = document.getElementById('comparison-boards');
+      let html = '';
+
+      Object.keys(palettes).forEach(paletteKey => {
+        const p = palettes[paletteKey];
+        html += `
+          <div class="comparison-card">
+            <div class="comparison-label">${p.name.toUpperCase()}</div>
+            <div id="compare-${paletteKey}"></div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      Object.keys(palettes).forEach(paletteKey => {
+        renderBoard(`compare-${paletteKey}`, paletteKey, 'checkmate-lose');
+      });
+    }
+
+    // Navigation
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(btn.dataset.section).classList.add('active');
+      });
+    });
+
+    // Palette selection
+    document.querySelectorAll('.palette-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.palette-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedPalette = card.dataset.palette;
+        renderStateMockups();
+      });
+    });
+
+    // State selection
+    document.querySelectorAll('.state-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedState = btn.dataset.state;
+        renderStateMockups();
+      });
+    });
+
+    // Add CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Initial render
+    renderMiniBoardsForPalettes();
+    renderStateMockups();
+    renderComparisonBoards();
+  </script>
+</body>
+</html>
