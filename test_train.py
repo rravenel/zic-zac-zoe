@@ -5,7 +5,7 @@ Tests for training configuration and model selection logic.
 import torch
 from game import Player
 from model import ZicZacNet, get_device
-from train import TrainConfig, Sample, mine_tactical_failures
+from train import TrainConfig, Sample, mine_tactical_failures, game_length_bucket
 from evaluate import EvalResult
 from tactical_generator import PatternType
 
@@ -62,6 +62,34 @@ class TestTrainConfig:
         """Custom tactical pass threshold should be settable."""
         config = TrainConfig(tactical_pass_threshold=0.90)
         assert config.tactical_pass_threshold == 0.90
+
+
+class TestGameLengthBucket:
+    """Tests for game length bucketing."""
+
+    def test_bucket_0_boundary(self):
+        """Games ≤9 moves go to bucket 0."""
+        assert game_length_bucket(1) == 0
+        assert game_length_bucket(5) == 0
+        assert game_length_bucket(9) == 0
+
+    def test_bucket_1_boundary(self):
+        """Games 10-18 moves go to bucket 1."""
+        assert game_length_bucket(10) == 1
+        assert game_length_bucket(14) == 1
+        assert game_length_bucket(18) == 1
+
+    def test_bucket_2_boundary(self):
+        """Games 19-27 moves go to bucket 2."""
+        assert game_length_bucket(19) == 2
+        assert game_length_bucket(23) == 2
+        assert game_length_bucket(27) == 2
+
+    def test_bucket_3_boundary(self):
+        """Games 28+ moves go to bucket 3."""
+        assert game_length_bucket(28) == 3
+        assert game_length_bucket(36) == 3
+        assert game_length_bucket(100) == 3
 
 
 class TestEvalResult:
@@ -310,6 +338,7 @@ def run_tests():
 
     test_classes = [
         TestTrainConfig,
+        TestGameLengthBucket,
         TestEvalResult,
         TestModelSelection,
         TestSample,

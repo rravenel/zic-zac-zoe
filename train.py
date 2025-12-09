@@ -34,6 +34,16 @@ from model import (
 from evaluate import eval_vs_random, eval_tactical, eval_model_vs_model, EvalResult
 from tactical_generator import generate_tactical_samples, tactical_sample_to_training_sample, PatternType, TacticalSample
 
+def game_length_bucket(game_len: int) -> int:
+    """Return bucket index (0-3) for game length: ≤9, 10-18, 19-27, 28+."""
+    if game_len <= 9:
+        return 0
+    if game_len <= 18:
+        return 1
+    if game_len <= 27:
+        return 2
+    return 3
+
 
 # =============================================================================
 # Training Configuration
@@ -342,7 +352,7 @@ def play_game(model: ZicZacNet, device: torch.device,
     return samples, result
 
 
-def _worker_play_games(args: Tuple) -> Tuple[List[Sample], int, int, int]:
+def _worker_play_games(args: Tuple) -> Tuple[List[Sample], int, int, int, List[int]]:
     """Worker function for parallel game playing."""
     model_state_dict, num_games, config_dict = args
 
@@ -358,10 +368,12 @@ def _worker_play_games(args: Tuple) -> Tuple[List[Sample], int, int, int]:
     x_wins = 0
     o_wins = 0
     draws = 0
+    len_buckets = [0, 0, 0, 0]
 
     for _ in range(num_games):
         game_samples, result = play_game(model, device, config)
         samples.extend(game_samples)
+        len_buckets[game_length_bucket(len(game_samples))] += 1
 
         if result == GameResult.X_WINS:
             x_wins += 1
@@ -370,7 +382,7 @@ def _worker_play_games(args: Tuple) -> Tuple[List[Sample], int, int, int]:
         else:
             draws += 1
 
-    return samples, x_wins, o_wins, draws
+    return samples, x_wins, o_wins, draws, len_buckets
 
 
 def self_play_games(model: ZicZacNet, device: torch.device,
@@ -385,12 +397,12 @@ def self_play_games(model: ZicZacNet, device: torch.device,
         x_wins = 0
         o_wins = 0
         draws = 0
-        total_moves = 0
+        len_buckets = [0, 0, 0, 0]
 
         for _ in range(config.games_per_iteration):
             samples, result = play_game(model, device, config)
             all_samples.extend(samples)
-            total_moves += len(samples)
+            len_buckets[game_length_bucket(len(samples))] += 1
 
             if result == GameResult.X_WINS:
                 x_wins += 1
@@ -403,7 +415,7 @@ def self_play_games(model: ZicZacNet, device: torch.device,
             "x_wins": x_wins,
             "o_wins": o_wins,
             "draws": draws,
-            "avg_game_length": total_moves / config.games_per_iteration,
+            "len_buckets": len_buckets,
         }
         return all_samples, stats
 
@@ -438,19 +450,21 @@ def self_play_games(model: ZicZacNet, device: torch.device,
     x_wins = 0
     o_wins = 0
     draws = 0
+    len_buckets = [0, 0, 0, 0]
 
-    for samples, xw, ow, dw in results:
+    for samples, xw, ow, dw, buckets in results:
         all_samples.extend(samples)
         x_wins += xw
         o_wins += ow
         draws += dw
+        for i, count in enumerate(buckets):
+            len_buckets[i] += count
 
-    total_moves = len(all_samples)
     stats = {
         "x_wins": x_wins,
         "o_wins": o_wins,
         "draws": draws,
-        "avg_game_length": total_moves / config.games_per_iteration,
+        "len_buckets": len_buckets,
     }
 
     return all_samples, stats
@@ -997,9 +1011,10 @@ def train(config: Optional[TrainConfig] = None, num_iterations: int = 100,
             iter_time = time.time() - iter_start
             timestamp = datetime.now().strftime("%H:%M:%S")
 
+            lb = game_stats['len_buckets']
             print(f"[{timestamp}] Iter {iteration:4d} | "
                   f"Games: X={game_stats['x_wins']:2d} O={game_stats['o_wins']:2d} D={game_stats['draws']:2d} | "
-                  f"Avg len: {game_stats['avg_game_length']:.1f} | "
+                  f"Len x9: {lb[0]}-{lb[1]}-{lb[2]}-{lb[3]} | "
                   f"P_loss: {train_stats['policy_loss']:.4f} | "
                   f"V_loss: {train_stats['value_loss']:.4f} | "
                   f"Buffer: {len(replay_buffer):5d} | "
