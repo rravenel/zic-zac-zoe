@@ -29,10 +29,13 @@ const AI_FIRST_MOVE_DELAY = 500; // Delay when AI goes first
 // Game State
 // =============================================================================
 
+// Game mode: AI difficulty or 2-player
+type GameMode = Difficulty | "2player";
+
 interface GameState {
   board: BoardState;
   humanPlayer: Player;
-  difficulty: Difficulty;
+  mode: GameMode;
   gameOver: boolean;
   lastMove: number | null;
   result: GameCheckResult | null;
@@ -43,13 +46,17 @@ interface GameState {
 const state: GameState = {
   board: createBoard(),
   humanPlayer: Player.X,
-  difficulty: "medium",
+  mode: "medium",
   gameOver: false,
   lastMove: null,
   result: null,
   lastGuardrailWeight: null,
   checkmate: null,
 };
+
+function isTwoPlayerMode(): boolean {
+  return state.mode === "2player";
+}
 
 // =============================================================================
 // Stats Tracking
@@ -134,22 +141,24 @@ function recordGameResult(result: GameResult, humanPlayer: Player): void {
 const boardEl = document.getElementById("board")!;
 const statusEl = document.getElementById("status")!;
 const loadingEl = document.getElementById("loading")!;
+const statsEl = document.querySelector(".stats") as HTMLElement;
 const btnPlayer = document.getElementById("btn-player")!;
-const btnDifficulty = document.getElementById("btn-difficulty")!;
+const btnMode = document.getElementById("btn-mode")!;
 const btnNewGame = document.getElementById("btn-new-game")!;
 
 // Player options for cycling
 const PLAYER_OPTIONS: { value: Player; label: string }[] = [
-  { value: Player.X, label: "1ST (X)" },
-  { value: Player.O, label: "2ND (O)" },
+  { value: Player.X, label: "X (1ST)" },
+  { value: Player.O, label: "O (2ND)" },
 ];
 
-// Difficulty options for cycling
-const DIFFICULTY_OPTIONS: { value: Difficulty; label: string }[] = [
+// Mode options for cycling (AI difficulties + 2-player)
+const MODE_OPTIONS: { value: GameMode; label: string }[] = [
   { value: "easy", label: "EASY" },
   { value: "medium", label: "MEDIUM" },
   { value: "hard", label: "HARD" },
   { value: "expert", label: "EXPERT" },
+  { value: "2player", label: "2 PLAYER" },
 ];
 
 // =============================================================================
@@ -180,8 +189,14 @@ function renderBoard(): void {
   let checkmateHighlightClass: string | null = null;
   let checkmateIndices: Set<number> | null = null;
   if (state.checkmate?.isCheckmate) {
-    const humanWins = state.checkmate.loser !== state.humanPlayer;
-    checkmateHighlightClass = humanWins ? "checkmate-win-highlight" : "checkmate-lose-highlight";
+    // In 2-player mode, use winner's color; in vs AI mode, use win/lose
+    if (isTwoPlayerMode()) {
+      const winner = state.checkmate.loser === Player.X ? Player.O : Player.X;
+      checkmateHighlightClass = winner === Player.X ? "checkmate-win-highlight" : "checkmate-lose-highlight";
+    } else {
+      const humanWins = state.checkmate.loser !== state.humanPlayer;
+      checkmateHighlightClass = humanWins ? "checkmate-win-highlight" : "checkmate-lose-highlight";
+    }
     // Flatten all pattern indices into a Set for O(1) lookup
     checkmateIndices = new Set(
       [...state.checkmate.threatPatterns, ...state.checkmate.suicidePatterns].flat()
@@ -244,7 +259,7 @@ function renderBoard(): void {
  * Update the status display
  */
 function updateStatus(): void {
-  statusEl.classList.remove("thinking", "your-turn", "win", "lose", "draw");
+  statusEl.classList.remove("thinking", "your-turn", "win", "lose", "draw", "x-wins", "o-wins");
 
   if (state.gameOver && state.result) {
     const { result } = state.result;
@@ -255,23 +270,38 @@ function updateStatus(): void {
     } else {
       // Determine winner
       const winner = result === GameResult.XWins ? Player.X : Player.O;
-      const humanWins = winner === state.humanPlayer;
 
-      // Check if this was a checkmate
-      if (state.checkmate && state.checkmate.isCheckmate) {
-        statusEl.textContent = "CHECKMATE!!";
-        statusEl.classList.add(humanWins ? "win" : "lose");
-      } else if (humanWins) {
-        statusEl.textContent = "YOU WIN!!!";
-        statusEl.classList.add("win");
+      if (isTwoPlayerMode()) {
+        // 2-player mode: show "X WINS!" or "O WINS!" in winner's color
+        const winClass = winner === Player.X ? "x-wins" : "o-wins";
+        if (state.checkmate?.isCheckmate) {
+          statusEl.textContent = "CHECKMATE!!";
+        } else {
+          statusEl.textContent = winner === Player.X ? "X WINS!" : "O WINS!";
+        }
+        statusEl.classList.add(winClass);
       } else {
-        statusEl.textContent = "GAME OVER";
-        statusEl.classList.add("lose");
+        // VS AI mode: show win/lose from human's perspective
+        const humanWins = winner === state.humanPlayer;
+        if (state.checkmate?.isCheckmate) {
+          statusEl.textContent = "CHECKMATE!!";
+          statusEl.classList.add(humanWins ? "win" : "lose");
+        } else if (humanWins) {
+          statusEl.textContent = "YOU WIN!!!";
+          statusEl.classList.add("win");
+        } else {
+          statusEl.textContent = "GAME OVER";
+          statusEl.classList.add("lose");
+        }
       }
     }
   } else {
     const currentPlayer = getCurrentPlayer(state.board);
-    if (currentPlayer === state.humanPlayer) {
+    if (isTwoPlayerMode()) {
+      // 2-player mode: show whose turn it is
+      statusEl.textContent = currentPlayer === Player.X ? "X PLAYS" : "O PLAYS";
+      statusEl.classList.add("your-turn");
+    } else if (currentPlayer === state.humanPlayer) {
       statusEl.textContent = "YOUR TURN";
       statusEl.classList.add("your-turn");
     } else {
@@ -284,13 +314,17 @@ function updateStatus(): void {
  * Update button text to reflect current state
  */
 function updateButtons(): void {
-  // Player button
+  // Player button - disabled in 2-player mode
   const playerOption = PLAYER_OPTIONS.find(o => o.value === state.humanPlayer);
   btnPlayer.textContent = playerOption?.label ?? "1ST (X)";
+  btnPlayer.classList.toggle("disabled", isTwoPlayerMode());
 
-  // Difficulty button
-  const diffOption = DIFFICULTY_OPTIONS.find(o => o.value === state.difficulty);
-  btnDifficulty.textContent = diffOption?.label ?? "MEDIUM";
+  // Mode button
+  const modeOption = MODE_OPTIONS.find(o => o.value === state.mode);
+  btnMode.textContent = modeOption?.label ?? "MEDIUM";
+
+  // Stats visibility - hidden in 2-player mode
+  statsEl.style.visibility = isTwoPlayerMode() ? "hidden" : "visible";
 }
 
 // =============================================================================
@@ -313,8 +347,8 @@ function newGame(): void {
   updateStatus();
   updateGuardrailDisplay();
 
-  // If AI goes first, make AI move
-  if (state.humanPlayer === Player.O) {
+  // If AI goes first (and we're not in 2-player mode), make AI move
+  if (!isTwoPlayerMode() && state.humanPlayer === Player.O) {
     setTimeout(() => makeAIMove(), AI_FIRST_MOVE_DELAY);
   }
 }
@@ -326,9 +360,9 @@ function handleCellClick(index: number): void {
   // Ignore if game over
   if (state.gameOver) return;
 
-  // Ignore if not human's turn
+  // In 2-player mode, either player can go; in vs AI mode, only human's turn
   const currentPlayer = getCurrentPlayer(state.board);
-  if (currentPlayer !== state.humanPlayer) return;
+  if (!isTwoPlayerMode() && currentPlayer !== state.humanPlayer) return;
 
   // Ignore if cell is occupied
   if (state.board[index] !== Player.Empty) return;
@@ -338,9 +372,10 @@ function handleCellClick(index: number): void {
 }
 
 /**
- * Make a human move
+ * Make a human move (handles both vs AI and 2-player modes)
  */
 function makeHumanMove(index: number): void {
+  const currentPlayer = getCurrentPlayer(state.board);
   state.board = makeMove(state.board, index);
   state.lastMove = index;
 
@@ -349,27 +384,31 @@ function makeHumanMove(index: number): void {
   if (result.result !== GameResult.Ongoing) {
     state.gameOver = true;
     state.result = result;
-    recordGameResult(result.result, state.humanPlayer);
+    if (!isTwoPlayerMode()) {
+      recordGameResult(result.result, state.humanPlayer);
+    }
     renderBoard();
     updateStatus();
     return;
   }
 
-  // Check if AI is now checkmated (before they even move)
-  const aiPlayer = state.humanPlayer === Player.X ? Player.O : Player.X;
-  const checkmate = detectCheckmate(state.board, aiPlayer);
+  // Check if opponent is now checkmated (before they move)
+  const opponent = currentPlayer === Player.X ? Player.O : Player.X;
+  const checkmate = detectCheckmate(state.board, opponent);
   if (checkmate.isCheckmate) {
     state.gameOver = true;
     state.checkmate = checkmate;
-    // AI is checkmated, so human wins
-    const humanWinResult = state.humanPlayer === Player.X ? GameResult.XWins : GameResult.OWins;
+    // Opponent is checkmated, so current player wins
+    const winResult = currentPlayer === Player.X ? GameResult.XWins : GameResult.OWins;
     state.result = {
-      result: humanWinResult,
+      result: winResult,
       winningIndices: [],
       losingIndices: [],
-      losingPlayer: aiPlayer,
+      losingPlayer: opponent,
     };
-    recordGameResult(humanWinResult, state.humanPlayer);
+    if (!isTwoPlayerMode()) {
+      recordGameResult(winResult, state.humanPlayer);
+    }
     renderBoard();
     updateStatus();
     return;
@@ -378,8 +417,10 @@ function makeHumanMove(index: number): void {
   renderBoard();
   updateStatus();
 
-  // AI's turn - add small delay for arcade feel
-  setTimeout(() => makeAIMove(), AI_MOVE_DELAY);
+  // In vs AI mode, trigger AI's turn
+  if (!isTwoPlayerMode()) {
+    setTimeout(() => makeAIMove(), AI_MOVE_DELAY);
+  }
 }
 
 /**
@@ -401,7 +442,7 @@ async function makeAIMove(): Promise<void> {
       move = getRulesMove(state.board, getCurrentPlayer(state.board));
       guardrailWeight = 1.0; // Rules AI always uses guardrails
     } else {
-      const result = await getAIMove(state.board, state.difficulty);
+      const result = await getAIMove(state.board, state.mode as Difficulty);
       move = result.move;
       guardrailWeight = result.guardrailWeight;
     }
@@ -453,7 +494,9 @@ async function makeAIMove(): Promise<void> {
 
 function setupEventListeners(): void {
   // Player selection - cycles through options and starts new game
+  // (disabled in 2-player mode via CSS pointer-events)
   btnPlayer.addEventListener("click", () => {
+    if (isTwoPlayerMode()) return; // Extra safety check
     const currentIndex = PLAYER_OPTIONS.findIndex(o => o.value === state.humanPlayer);
     const nextIndex = (currentIndex + 1) % PLAYER_OPTIONS.length;
     state.humanPlayer = PLAYER_OPTIONS[nextIndex].value;
@@ -461,12 +504,13 @@ function setupEventListeners(): void {
     newGame();
   });
 
-  // Difficulty selection - cycles through options
-  btnDifficulty.addEventListener("click", () => {
-    const currentIndex = DIFFICULTY_OPTIONS.findIndex(o => o.value === state.difficulty);
-    const nextIndex = (currentIndex + 1) % DIFFICULTY_OPTIONS.length;
-    state.difficulty = DIFFICULTY_OPTIONS[nextIndex].value;
+  // Mode selection - cycles through options and starts new game
+  btnMode.addEventListener("click", () => {
+    const currentIndex = MODE_OPTIONS.findIndex(o => o.value === state.mode);
+    const nextIndex = (currentIndex + 1) % MODE_OPTIONS.length;
+    state.mode = MODE_OPTIONS[nextIndex].value;
     updateButtons();
+    newGame();
   });
 
   // New game

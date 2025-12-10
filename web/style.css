@@ -146,6 +146,18 @@ body {
   color: #ff8800;
 }
 
+.status.x-wins {
+  font-size: 32px;
+  color: var(--color-x);
+  animation: winner 0.5s ease-in-out infinite alternate;
+}
+
+.status.o-wins {
+  font-size: 32px;
+  color: var(--color-o);
+  animation: winner 0.5s ease-in-out infinite alternate;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -348,6 +360,16 @@ body {
   border-color: var(--color-primary);
   color: var(--color-primary);
   box-shadow: var(--glow-btn);
+}
+
+.btn-mode {
+  min-width: 110px;
+}
+
+.btn-cycle.disabled {
+  opacity: 0.3;
+  cursor: default;
+  pointer-events: none;
 }
 
 .btn-primary {
