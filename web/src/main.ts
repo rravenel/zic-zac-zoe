@@ -29,13 +29,11 @@ const AI_FIRST_MOVE_DELAY = 500; // Delay when AI goes first
 // Game State
 // =============================================================================
 
-// Game mode: AI difficulty or 2-player
-type GameMode = Difficulty | "2player";
-
 interface GameState {
   board: BoardState;
   humanPlayer: Player;
-  mode: GameMode;
+  twoPlayer: boolean;
+  difficulty: Difficulty;
   gameOver: boolean;
   lastMove: number | null;
   result: GameCheckResult | null;
@@ -46,7 +44,8 @@ interface GameState {
 const state: GameState = {
   board: createBoard(),
   humanPlayer: Player.X,
-  mode: "medium",
+  twoPlayer: false,
+  difficulty: "medium",
   gameOver: false,
   lastMove: null,
   result: null,
@@ -55,7 +54,7 @@ const state: GameState = {
 };
 
 function isTwoPlayerMode(): boolean {
-  return state.mode === "2player";
+  return state.twoPlayer;
 }
 
 // =============================================================================
@@ -142,9 +141,16 @@ const boardEl = document.getElementById("board")!;
 const statusEl = document.getElementById("status")!;
 const loadingEl = document.getElementById("loading")!;
 const statsEl = document.querySelector(".stats") as HTMLElement;
-const btnPlayer = document.getElementById("btn-player")!;
 const btnMode = document.getElementById("btn-mode")!;
+const btnPlayer = document.getElementById("btn-player")!;
+const btnDifficulty = document.getElementById("btn-difficulty")!;
 const btnNewGame = document.getElementById("btn-new-game")!;
+
+// Mode options (1-player vs 2-player)
+const MODE_OPTIONS: { value: boolean; label: string }[] = [
+  { value: false, label: "1-PLAYER" },
+  { value: true, label: "2-PLAYER" },
+];
 
 // Player options for cycling
 const PLAYER_OPTIONS: { value: Player; label: string }[] = [
@@ -152,13 +158,12 @@ const PLAYER_OPTIONS: { value: Player; label: string }[] = [
   { value: Player.O, label: "O (2ND)" },
 ];
 
-// Mode options for cycling (AI difficulties + 2-player)
-const MODE_OPTIONS: { value: GameMode; label: string }[] = [
+// Difficulty options for cycling
+const DIFFICULTY_OPTIONS: { value: Difficulty; label: string }[] = [
   { value: "easy", label: "EASY" },
   { value: "medium", label: "MEDIUM" },
   { value: "hard", label: "HARD" },
   { value: "expert", label: "EXPERT" },
-  { value: "2player", label: "2 PLAYER" },
 ];
 
 // =============================================================================
@@ -314,14 +319,19 @@ function updateStatus(): void {
  * Update button text to reflect current state
  */
 function updateButtons(): void {
+  // Mode button
+  const modeOption = MODE_OPTIONS.find(o => o.value === state.twoPlayer);
+  btnMode.textContent = modeOption?.label ?? "1-PLAYER";
+
   // Player button - disabled in 2-player mode
   const playerOption = PLAYER_OPTIONS.find(o => o.value === state.humanPlayer);
-  btnPlayer.textContent = playerOption?.label ?? "1ST (X)";
+  btnPlayer.textContent = playerOption?.label ?? "X (1ST)";
   btnPlayer.classList.toggle("disabled", isTwoPlayerMode());
 
-  // Mode button
-  const modeOption = MODE_OPTIONS.find(o => o.value === state.mode);
-  btnMode.textContent = modeOption?.label ?? "MEDIUM";
+  // Difficulty button - disabled in 2-player mode
+  const diffOption = DIFFICULTY_OPTIONS.find(o => o.value === state.difficulty);
+  btnDifficulty.textContent = diffOption?.label ?? "MEDIUM";
+  btnDifficulty.classList.toggle("disabled", isTwoPlayerMode());
 
   // Stats visibility - hidden in 2-player mode
   statsEl.style.visibility = isTwoPlayerMode() ? "hidden" : "visible";
@@ -442,7 +452,7 @@ async function makeAIMove(): Promise<void> {
       move = getRulesMove(state.board, getCurrentPlayer(state.board));
       guardrailWeight = 1.0; // Rules AI always uses guardrails
     } else {
-      const result = await getAIMove(state.board, state.mode as Difficulty);
+      const result = await getAIMove(state.board, state.difficulty);
       move = result.move;
       guardrailWeight = result.guardrailWeight;
     }
@@ -493,6 +503,15 @@ async function makeAIMove(): Promise<void> {
 // =============================================================================
 
 function setupEventListeners(): void {
+  // Mode selection - toggles between 1-player and 2-player and starts new game
+  btnMode.addEventListener("click", () => {
+    const currentIndex = MODE_OPTIONS.findIndex(o => o.value === state.twoPlayer);
+    const nextIndex = (currentIndex + 1) % MODE_OPTIONS.length;
+    state.twoPlayer = MODE_OPTIONS[nextIndex].value;
+    updateButtons();
+    newGame();
+  });
+
   // Player selection - cycles through options and starts new game
   // (disabled in 2-player mode via CSS pointer-events)
   btnPlayer.addEventListener("click", () => {
@@ -504,11 +523,13 @@ function setupEventListeners(): void {
     newGame();
   });
 
-  // Mode selection - cycles through options and starts new game
-  btnMode.addEventListener("click", () => {
-    const currentIndex = MODE_OPTIONS.findIndex(o => o.value === state.mode);
-    const nextIndex = (currentIndex + 1) % MODE_OPTIONS.length;
-    state.mode = MODE_OPTIONS[nextIndex].value;
+  // Difficulty selection - cycles through options and starts new game
+  // (disabled in 2-player mode via CSS pointer-events)
+  btnDifficulty.addEventListener("click", () => {
+    if (isTwoPlayerMode()) return; // Extra safety check
+    const currentIndex = DIFFICULTY_OPTIONS.findIndex(o => o.value === state.difficulty);
+    const nextIndex = (currentIndex + 1) % DIFFICULTY_OPTIONS.length;
+    state.difficulty = DIFFICULTY_OPTIONS[nextIndex].value;
     updateButtons();
     newGame();
   });
