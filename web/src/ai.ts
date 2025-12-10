@@ -10,9 +10,9 @@ import { createsFour, createsThree, findThreats } from "./rules-ai";
 
 // Difficulty settings: temperature values
 export const DIFFICULTY = {
-  easy: 2.0,
-  medium: 1.0,
-  hard: 0.5,
+  easy: 3.0,
+  medium: 1.5,
+  hard: 1.0,
   expert: 0.1,
 } as const;
 
@@ -27,7 +27,7 @@ export interface AIResult {
 // At moveCount=0, guardrail is at full strength
 // Decay formula: strength = max(0, 1 - (moveCount / 36) * decayRate)
 const GUARDRAIL_DECAY: Record<Difficulty, number> = {
-  easy: 1.5,   // Hits 0 around move 24
+  easy: 2.0,   // Hits 0 at move 18 (halfway)
   medium: 1.0, // Hits 0 at move 36
   hard: 0.5,   // Still at 50% strength at end
   expert: 0.0, // No decay - always full strength
