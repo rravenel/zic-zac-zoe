@@ -18,7 +18,7 @@ import {
   getLegalMoves,
   GameCheckResult,
 } from "./game";
-import { loadModel, getAIMove, Difficulty, getModelIteration } from "./ai";
+import { loadModel, getAIMove, Difficulty } from "./ai";
 import { getRulesMove, isRulesAI, detectCheckmate, CheckmateResult } from "./rules-ai";
 
 // Timing constants (milliseconds)
@@ -37,7 +37,6 @@ interface GameState {
   gameOver: boolean;
   lastMove: number | null;
   result: GameCheckResult | null;
-  lastGuardrailWeight: number | null;
   checkmate: CheckmateResult | null;
 }
 
@@ -49,7 +48,6 @@ const state: GameState = {
   gameOver: false,
   lastMove: null,
   result: null,
-  lastGuardrailWeight: null,
   checkmate: null,
 };
 
@@ -100,17 +98,6 @@ function updateStatsDisplay(): void {
 function clearStatsPulsing(): void {
   document.getElementById("stats-won")?.classList.remove("pulsing");
   document.getElementById("stats-lost")?.classList.remove("pulsing");
-}
-
-function updateGuardrailDisplay(): void {
-  const guardrailEl = document.getElementById("guardrail-weight");
-  if (!guardrailEl) return;
-
-  if (state.lastGuardrailWeight === null) {
-    guardrailEl.textContent = "";
-  } else {
-    guardrailEl.textContent = `GR ${state.lastGuardrailWeight.toFixed(2)}`;
-  }
 }
 
 function recordGameResult(result: GameResult, humanPlayer: Player): void {
@@ -264,7 +251,7 @@ function renderBoard(): void {
  * Update the status display
  */
 function updateStatus(): void {
-  statusEl.classList.remove("thinking", "your-turn", "win", "lose", "draw", "x-wins", "o-wins");
+  statusEl.classList.remove("your-turn", "win", "lose", "draw", "x-wins", "o-wins");
 
   if (state.gameOver && state.result) {
     const { result } = state.result;
@@ -349,13 +336,11 @@ function newGame(): void {
   state.gameOver = false;
   state.lastMove = null;
   state.result = null;
-  state.lastGuardrailWeight = null;
   state.checkmate = null;
 
   clearStatsPulsing();
   renderBoard();
   updateStatus();
-  updateGuardrailDisplay();
 
   // If AI goes first (and we're not in 2-player mode), make AI move
   if (!isTwoPlayerMode() && state.humanPlayer === Player.O) {
@@ -445,16 +430,13 @@ async function makeAIMove(): Promise<void> {
 
   // Use rules-based AI for v3, neural network otherwise
   let move: number;
-  let guardrailWeight = 0;
 
   try {
     if (isRulesAI()) {
       move = getRulesMove(state.board, getCurrentPlayer(state.board));
-      guardrailWeight = 1.0; // Rules AI always uses guardrails
     } else {
       const result = await getAIMove(state.board, state.difficulty);
       move = result.move;
-      guardrailWeight = result.guardrailWeight;
     }
   } catch (error) {
     // Fallback to random move - never show error to user
@@ -464,8 +446,6 @@ async function makeAIMove(): Promise<void> {
 
   state.board = makeMove(state.board, move);
   state.lastMove = move;
-  state.lastGuardrailWeight = guardrailWeight;
-  updateGuardrailDisplay();
 
   // Check for game end
   const result = checkResultFast(state.board, move);
@@ -590,14 +570,9 @@ async function init(): Promise<void> {
   // Show stats
   updateStatsDisplay();
 
-  const iterationEl = document.getElementById("model-iteration");
-
   if (isRulesAI()) {
     // Rules-based AI (no model needed) - enabled via ?rules=1
     loadingEl.classList.add("hidden");
-    if (iterationEl) {
-      iterationEl.textContent = "RULES";
-    }
     newGame();
   } else {
     // Load neural network model
@@ -605,14 +580,6 @@ async function init(): Promise<void> {
       const weightsPath = import.meta.env.DEV ? "/weights.json" : "./weights.json";
       await loadModel(weightsPath);
       loadingEl.classList.add("hidden");
-
-      // Display model iteration
-      const iteration = getModelIteration();
-      if (iterationEl && iteration !== undefined) {
-        iterationEl.textContent = `ITER ${iteration}`;
-      }
-
-      // Start the game
       newGame();
     } catch (error) {
       console.error("Failed to load model:", error);

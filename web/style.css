@@ -16,7 +16,6 @@
   --color-turn: #ffcc00;
   --color-dim: #888888;
   --color-cell-bg: #1a1a2e;
-  --color-cell-border: #00ffff;
   --color-x: #00ffff;
   --color-o: #ff00ff;
 
@@ -119,11 +118,6 @@ body {
   justify-content: center;
   text-align: center;
   padding: 8px;
-}
-
-.status.thinking {
-  color: var(--color-primary);
-  animation: pulse 1s infinite;
 }
 
 .status.your-turn {
@@ -349,12 +343,6 @@ body {
   transform: scale(0.95);
 }
 
-.btn.selected {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  box-shadow: var(--glow-btn);
-}
-
 .btn-cycle {
   min-width: 80px;
   border-color: var(--color-primary);
@@ -407,28 +395,3 @@ body {
   animation: pulse 1s infinite;
 }
 
-/* =============================================================================
-   Model Iteration Indicator
-   ============================================================================= */
-
-.model-iteration {
-  position: fixed;
-  bottom: 25px;
-  left: 10px;
-  font-family: var(--font-arcade);
-  font-size: 10px;
-  color: var(--color-dim);
-  letter-spacing: 1px;
-  z-index: 10;
-}
-
-.guardrail-weight {
-  position: fixed;
-  bottom: 25px;
-  right: 10px;
-  font-family: var(--font-arcade);
-  font-size: 10px;
-  color: var(--color-dim);
-  letter-spacing: 1px;
-  z-index: 10;
-}
