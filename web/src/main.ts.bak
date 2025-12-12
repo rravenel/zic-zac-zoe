@@ -333,27 +333,27 @@ function updateStatus(): void {
   }
 }
 
-// Difficulty level display names
-const DIFFICULTY_NAMES: Record<Difficulty, string> = {
-  easy: "EASY",
-  medium: "MED",
-  hard: "HARD",
-  expert: "XPRT",
-};
-
 /**
  * Update button visuals to reflect current state
  */
 function updateButtons(): void {
-  // Mode button - shows "1P" or "2P"
-  btnMode.textContent = state.twoPlayer ? "2P" : "1P";
+  // Mode button - two person icons, second dims in 1-player mode
+  const icons = btnMode.querySelectorAll(".person-icon");
+  if (icons.length >= 2) {
+    icons[1].classList.toggle("dim", !state.twoPlayer);
+  }
 
-  // Player button - shows "X" or "O", disabled in 2-player mode
+  // Player button - just shows "X" or "O", disabled in 2-player mode
   btnPlayer.textContent = state.humanPlayer === Player.X ? "X" : "O";
   btnPlayer.classList.toggle("disabled", isTwoPlayerMode());
 
-  // Difficulty button - shows difficulty name, disabled in 2-player mode
-  btnDifficulty.textContent = DIFFICULTY_NAMES[state.difficulty];
+  // Difficulty button - 4 stars, lit count = difficulty level (1-4)
+  const difficultyIndex = DIFFICULTY_LEVELS.indexOf(state.difficulty);
+  const litCount = difficultyIndex + 1; // 1 for easy, 2 for medium, 3 for hard, 4 for expert
+  const stars = btnDifficulty.querySelectorAll(".star");
+  stars.forEach((star, i) => {
+    star.classList.toggle("dim", i >= litCount);
+  });
   btnDifficulty.classList.toggle("disabled", isTwoPlayerMode());
 }
 

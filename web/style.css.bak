@@ -276,12 +276,10 @@ body {
 /* 2-player mode stats */
 .stats-box.x-score {
   background-color: var(--color-x);
-  border-color: var(--color-x);
 }
 
 .stats-box.o-score {
   background-color: var(--color-o);
-  border-color: var(--color-o);
 }
 
 /* =============================================================================
@@ -300,10 +298,31 @@ body {
   display: flex;
   flex-direction: row;
   align-items: stretch;
+  justify-content: space-between;
   width: 170px;
   height: 44px;
   gap: 6px;
   box-sizing: border-box;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.control-label {
+  font-size: 8px;
+  color: var(--color-lose);
+  letter-spacing: 0px;
+  white-space: nowrap;
+  text-align: center;
+  overflow: visible;
 }
 
 /* Base button style */
@@ -323,37 +342,83 @@ body {
   transform: scale(0.95);
 }
 
-/* Setting buttons - solid red blocks */
-.btn-setting {
-  background-color: var(--color-lose);
-  color: var(--color-stats-text);
-  border: none;
+/* MODE button - person icons on black */
+.btn-mode {
+  display: flex;
+  gap: 4px;
+  padding: 0;
+  background-color: transparent;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.btn-mode .person-icon {
+  font-size: 24px;
+  color: var(--color-lose);
+  transition: opacity 0.15s ease;
+}
+
+.btn-mode .person-icon.dim {
+  opacity: 0.25;
+}
+
+/* PLAYS button - red outline */
+.btn-plays {
+  background-color: transparent;
+  color: var(--color-lose);
+  border: 2px solid var(--color-lose);
   padding: 0;
   font-size: 14px;
   display: flex;
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  flex: 1;
   min-width: 0;
 }
 
-/* Make mode and player buttons narrower */
-#btn-mode,
-#btn-player {
-  flex: 0.7;
-}
-
-/* Give difficulty button more space for 4-char text */
-#btn-difficulty {
-  flex: 1.6;
-}
-
-.btn-setting:hover {
+.btn-plays:hover {
   filter: brightness(1.1);
 }
 
-.btn-setting.disabled {
+/* DIFFICULTY button - red outline with stars */
+.btn-difficulty {
+  background-color: transparent;
+  color: var(--color-lose);
+  border: 2px solid var(--color-lose);
+  padding: 0;
+  font-size: 12px;
+  letter-spacing: 0px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-difficulty:hover {
+  filter: brightness(1.1);
+}
+
+.btn-difficulty {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.btn-difficulty .star {
+  transition: opacity 0.15s ease;
+}
+
+.btn-difficulty .star.dim {
+  opacity: 0.25;
+}
+
+.btn-difficulty.disabled {
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
+}
+
+.btn-plays.disabled {
   opacity: 0.25;
   cursor: default;
   pointer-events: none;

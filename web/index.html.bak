@@ -37,9 +37,23 @@
       <!-- Controls -->
       <div id="controls" class="controls">
         <div class="controls-left">
-          <button id="btn-mode" class="btn btn-setting">1P</button>
-          <button id="btn-player" class="btn btn-setting">X</button>
-          <button id="btn-difficulty" class="btn btn-setting">MED</button>
+          <div class="control-group">
+            <label class="control-label">MODE</label>
+            <button id="btn-mode" class="btn btn-mode">
+              <span class="person-icon">&#9823;</span>
+              <span class="person-icon dim">&#9823;</span>
+            </button>
+          </div>
+          <div class="control-group">
+            <label class="control-label">PLAYS</label>
+            <button id="btn-player" class="btn btn-plays">X</button>
+          </div>
+          <div class="control-group">
+            <label class="control-label">LEVEL</label>
+            <button id="btn-difficulty" class="btn btn-difficulty">
+              <span class="star">*</span><span class="star">*</span><span class="star dim">*</span><span class="star dim">*</span>
+            </button>
+          </div>
         </div>
         <button id="btn-new-game" class="btn btn-new-game">NEW GAME</button>
       </div>
