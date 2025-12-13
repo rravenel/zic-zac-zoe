@@ -16,11 +16,10 @@
   --color-turn: #ffcc00;
   --color-dim: #444444;
   --color-dim-light: #666666;
-  --color-cell-bg: #000044;
-  --color-cell-border: #0088ff;
+  --color-cell-bg: #000000;
+  --color-cell-border: #0044ff;
   --color-x: #00ffff;
   --color-o: #ffff00;
-  --color-btn-green: #00cc00;
   --color-stats-bg: #00dddd;
   --color-stats-text: #000000;
   --color-mode-icon: #ff0000;
@@ -66,19 +65,20 @@ body {
 
 .header {
   text-align: center;
+  width: 360px;
 }
 
 .title {
-  font-size: 32px;
+  font-size: 30px;
   color: var(--color-title);
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   white-space: nowrap;
 }
 
 .subtitle {
   font-size: 10px;
   margin-top: 6px;
-  letter-spacing: 1px;
+  letter-spacing: 0px;
   line-height: 1.6;
   white-space: nowrap;
 }
@@ -97,12 +97,14 @@ body {
 
 .status {
   font-size: 20px;
-  min-height: 50px;
+  height: 50px;
+  width: 360px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .status.your-turn {
@@ -159,27 +161,27 @@ body {
 .board {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 0;
+  gap: 10px;
   width: 360px;
-  height: 360px;
   justify-items: center;
   align-items: center;
 }
 
 .cell {
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
   background-color: var(--color-cell-bg);
-  border: 3px solid var(--color-cell-border);
+  border: 2px solid var(--color-cell-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 32px;
   line-height: 1;
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
 }
 
 .cell:hover:not(.occupied):not(.game-over) {
@@ -205,6 +207,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding-top: 4px;
+  padding-left: 4px;
+  box-sizing: border-box;
 }
 
 .cell .piece.x {
@@ -215,18 +222,69 @@ body {
   color: var(--color-o);
 }
 
-/* Cell highlighting - placeholder for game state visuals (TBD) */
-.cell.last-move {
-  /* TBD */
+/* Cell highlighting for last move */
+.cell.last-move-x {
+  border-color: var(--color-x);
 }
 
-.cell.win-highlight .piece {
-  color: var(--color-win);
+.cell.last-move-o {
+  border-color: var(--color-o);
 }
 
-.cell.lose-highlight .piece {
-  color: var(--color-lose);
+/* Game end highlights - border colors */
+.cell.end-green {
+  border-color: var(--color-win);
 }
+
+.cell.end-red {
+  border-color: var(--color-lose);
+}
+
+.cell.end-x {
+  border-color: var(--color-x);
+}
+
+.cell.end-o {
+  border-color: var(--color-o);
+}
+
+/* Checkmate crux cell blinking (1Hz = 1s period, same as scoreboard) */
+.cell.end-green.crux-blink {
+  animation: crux-blink-green 1s step-end infinite;
+}
+
+.cell.end-red.crux-blink {
+  animation: crux-blink-red 1s step-end infinite;
+}
+
+.cell.end-x.crux-blink {
+  animation: crux-blink-x 1s step-end infinite;
+}
+
+.cell.end-o.crux-blink {
+  animation: crux-blink-o 1s step-end infinite;
+}
+
+@keyframes crux-blink-green {
+  0%, 50% { border-color: var(--color-win); }
+  50.01%, 100% { border-color: var(--color-cell-border); }
+}
+
+@keyframes crux-blink-red {
+  0%, 50% { border-color: var(--color-lose); }
+  50.01%, 100% { border-color: var(--color-cell-border); }
+}
+
+@keyframes crux-blink-x {
+  0%, 50% { border-color: var(--color-x); }
+  50.01%, 100% { border-color: var(--color-cell-border); }
+}
+
+@keyframes crux-blink-o {
+  0%, 50% { border-color: var(--color-o); }
+  50.01%, 100% { border-color: var(--color-cell-border); }
+}
+
 
 /* =============================================================================
    Stats Boxes (below board)
@@ -269,7 +327,7 @@ body {
   50.01%, 100% {
     background-color: var(--color-bg);
     color: var(--color-stats-bg);
-    border-color: var(--color-stats-bg);
+    border-color: var(--color-bg);
   }
 }
 
@@ -302,7 +360,7 @@ body {
   align-items: stretch;
   width: 170px;
   height: 44px;
-  gap: 6px;
+  gap: 10px;
   box-sizing: border-box;
 }
 
@@ -341,12 +399,12 @@ body {
 /* Make mode and player buttons narrower */
 #btn-mode,
 #btn-player {
-  flex: 0.7;
+  flex: 0.8;
 }
 
-/* Give difficulty button more space for 4-char text */
+/* Difficulty button - tighter fit for 4-char text */
 #btn-difficulty {
-  flex: 1.6;
+  flex: 1.4;
 }
 
 .btn-setting:hover {
@@ -366,6 +424,7 @@ body {
   width: 170px;
   height: 44px;
   padding: 0;
+  border: none;
   font-size: 14px;
   letter-spacing: 2px;
   white-space: nowrap;
@@ -377,6 +436,13 @@ body {
 
 .btn-new-game:hover {
   filter: brightness(1.1);
+}
+
+/* Remove focus outline on all buttons */
+.btn:focus,
+.btn-setting:focus,
+.btn-new-game:focus {
+  outline: none;
 }
 
 /* =============================================================================

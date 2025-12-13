@@ -199,22 +199,60 @@ function createBoardCells(): void {
 function renderBoard(): void {
   const cells = boardEl.querySelectorAll(".cell");
 
-  // Pre-compute checkmate highlight info (avoid recomputing per cell)
-  let checkmateHighlightClass: string | null = null;
-  let checkmateIndices: Set<number> | null = null;
+  // Pre-compute game end highlight info
+  let endHighlightClass: string | null = null;
+  let endIndices: Set<number> | null = null;
+  let cruxIndices: Set<number> | null = null;
+
+  if (state.gameOver && state.result) {
+    const { result } = state.result;
+    if (result !== GameResult.Draw) {
+      const winner = result === GameResult.XWins ? Player.X : Player.O;
+
+      // Determine highlight class based on mode
+      if (isTwoPlayerMode()) {
+        // 2P: winner's color
+        endHighlightClass = winner === Player.X ? "end-x" : "end-o";
+      } else {
+        // 1P: green if human wins, red if AI wins
+        const humanWins = winner === state.humanPlayer;
+        endHighlightClass = humanWins ? "end-green" : "end-red";
+      }
+
+      // Collect indices that ended the game
+      endIndices = new Set([
+        ...state.result.winningIndices,
+        ...state.result.losingIndices,
+      ]);
+    }
+  }
+
+  // For checkmate, find crux cells (empty cells in the threat/suicide patterns)
   if (state.checkmate?.isCheckmate) {
-    // In 2-player mode, use winner's color; in vs AI mode, use win/lose
+    const winner = state.checkmate.loser === Player.X ? Player.O : Player.X;
+
+    // Determine highlight class for checkmate patterns
     if (isTwoPlayerMode()) {
-      const winner = state.checkmate.loser === Player.X ? Player.O : Player.X;
-      checkmateHighlightClass = winner === Player.X ? "checkmate-win-highlight" : "checkmate-lose-highlight";
+      endHighlightClass = winner === Player.X ? "end-x" : "end-o";
     } else {
       const humanWins = state.checkmate.loser !== state.humanPlayer;
-      checkmateHighlightClass = humanWins ? "checkmate-win-highlight" : "checkmate-lose-highlight";
+      endHighlightClass = humanWins ? "end-green" : "end-red";
     }
-    // Flatten all pattern indices into a Set for O(1) lookup
-    checkmateIndices = new Set(
+
+    // Collect all cells in checkmate patterns
+    endIndices = new Set(
       [...state.checkmate.threatPatterns, ...state.checkmate.suicidePatterns].flat()
     );
+
+    // Find crux cells - empty cells that would complete patterns
+    cruxIndices = new Set<number>();
+    for (const pattern of [...state.checkmate.threatPatterns, ...state.checkmate.suicidePatterns]) {
+      for (const idx of pattern) {
+        if (state.board[idx] === Player.Empty) {
+          cruxIndices.add(idx);
+        }
+      }
+    }
   }
 
   cells.forEach((cell, i) => {
@@ -224,11 +262,13 @@ function renderBoard(): void {
     // Clear classes
     el.classList.remove(
       "occupied",
-      "last-move",
-      "win-highlight",
-      "lose-highlight",
-      "checkmate-win-highlight",
-      "checkmate-lose-highlight",
+      "last-move-x",
+      "last-move-o",
+      "end-green",
+      "end-red",
+      "end-x",
+      "end-o",
+      "crux-blink",
       "game-over"
     );
 
@@ -251,29 +291,24 @@ function renderBoard(): void {
       el.classList.add("occupied");
     }
 
-    // Highlight last move
-    if (i === state.lastMove) {
-      el.classList.add("last-move");
+    // Highlight last move with player's color (only during game, not at end)
+    if (i === state.lastMove && piece !== Player.Empty && !state.gameOver) {
+      el.classList.add(piece === Player.X ? "last-move-x" : "last-move-o");
     }
 
     // Game over state
     if (state.gameOver) {
       el.classList.add("game-over");
-    }
 
-    // Win/lose highlights
-    if (state.result) {
-      if (state.result.winningIndices.includes(i)) {
-        el.classList.add("win-highlight");
-      }
-      if (state.result.losingIndices.includes(i)) {
-        el.classList.add("lose-highlight");
-      }
-    }
+      // Apply end highlight to cells that ended the game
+      if (endHighlightClass && endIndices?.has(i)) {
+        el.classList.add(endHighlightClass);
 
-    // Checkmate highlights (O(1) lookup via Set)
-    if (checkmateHighlightClass && checkmateIndices?.has(i)) {
-      el.classList.add(checkmateHighlightClass);
+        // Add blinking for crux cells in checkmate
+        if (cruxIndices?.has(i)) {
+          el.classList.add("crux-blink");
+        }
+      }
     }
   });
 }
