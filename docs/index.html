@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="Zic-Zac-Zoe: A twisted take on tic-tac-toe. Get 4 in a row to win, but 3 in a row loses!" />
     <title>ZIC-ZAC-ZOE</title>
-    <script type="module" crossorigin src="./assets/index-C4aox8GZ.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-BnzPRvba.css">
+    <script type="module" crossorigin src="./assets/index-im_6cdFA.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BXoikqnT.css">
   </head>
   <body>
     <div id="app">
@@ -15,7 +15,7 @@
       <header class="header">
         <h1 class="title">ZIC-ZAC-ZOE</h1>
         <p class="subtitle">
-          <span class="subtitle-lose">3 IN A ROW LOSE</span>
+          <span class="subtitle-lose">3 IN A ROW LOSES</span>
           &nbsp;&nbsp;
           <span class="subtitle-win">4 IN A ROW WINS</span>
         </p>
@@ -38,23 +38,9 @@
       <!-- Controls -->
       <div id="controls" class="controls">
         <div class="controls-left">
-          <div class="control-group">
-            <label class="control-label">MODE</label>
-            <button id="btn-mode" class="btn btn-mode">
-              <span class="person-icon">&#9823;</span>
-              <span class="person-icon dim">&#9823;</span>
-            </button>
-          </div>
-          <div class="control-group">
-            <label class="control-label">PLAYS</label>
-            <button id="btn-player" class="btn btn-plays">X</button>
-          </div>
-          <div class="control-group">
-            <label class="control-label">DIFFICULTY</label>
-            <button id="btn-difficulty" class="btn btn-difficulty">
-              <span class="star">*</span><span class="star">*</span><span class="star dim">*</span><span class="star dim">*</span>
-            </button>
-          </div>
+          <button id="btn-mode" class="btn btn-setting">1P</button>
+          <button id="btn-player" class="btn btn-setting">X</button>
+          <button id="btn-difficulty" class="btn btn-setting">MED</button>
         </div>
         <button id="btn-new-game" class="btn btn-new-game">NEW GAME</button>
       </div>

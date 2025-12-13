@@ -199,6 +199,10 @@ function createBoardCells(): void {
 function renderBoard(): void {
   const cells = boardEl.querySelectorAll(".cell");
 
+  // Update board's turn class for hover styling in 2P mode
+  const currentPlayer = getCurrentPlayer(state.board);
+  boardEl.classList.toggle("o-turn", isTwoPlayerMode() && currentPlayer === Player.O);
+
   // Pre-compute game end highlight info
   let endHighlightClass: string | null = null;
   let endIndices: Set<number> | null = null;
@@ -304,8 +308,8 @@ function renderBoard(): void {
       if (endHighlightClass && endIndices?.has(i)) {
         el.classList.add(endHighlightClass);
 
-        // Add blinking for crux cells in checkmate
-        if (cruxIndices?.has(i)) {
+        // Blink crux cells and the last move cell
+        if (cruxIndices?.has(i) || i === state.lastMove) {
           el.classList.add("crux-blink");
         }
       }
@@ -317,7 +321,7 @@ function renderBoard(): void {
  * Update the status display
  */
 function updateStatus(): void {
-  statusEl.classList.remove("your-turn", "x-turn", "o-turn", "win", "lose", "draw", "x-wins", "o-wins");
+  statusEl.classList.remove("your-turn", "x-turn", "o-turn", "win", "lose", "draw", "x-wins", "o-wins", "hidden");
 
   if (state.gameOver && state.result) {
     const { result } = state.result;
@@ -363,7 +367,8 @@ function updateStatus(): void {
       statusEl.textContent = "YOUR TURN";
       statusEl.classList.add("your-turn");
     } else {
-      statusEl.textContent = "";
+      // Hide status completely when AI is thinking (avoids repaint artifacts)
+      statusEl.classList.add("hidden");
     }
   }
 }

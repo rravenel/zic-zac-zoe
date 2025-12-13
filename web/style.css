@@ -105,6 +105,11 @@ body {
   text-align: center;
   box-sizing: border-box;
   overflow: hidden;
+  background-color: var(--color-bg);
+}
+
+.status.hidden {
+  visibility: hidden;
 }
 
 .status.your-turn {
@@ -185,8 +190,12 @@ body {
 }
 
 .cell:hover:not(.occupied):not(.game-over) {
-  border-color: var(--color-primary);
-  background-color: #000066;
+  border-color: var(--color-x);
+}
+
+/* In 2P mode, hover color matches current player */
+.board.o-turn .cell:hover:not(.occupied):not(.game-over) {
+  border-color: var(--color-o);
 }
 
 .cell:active:not(.occupied):not(.game-over) {
