@@ -23,7 +23,8 @@ Neural network AI for Zic-Zac-Zoe, a tic-tac-toe variant.
 ├── export_weights.py    # Export to JSON for browser
 ├── play.py              # Human vs AI CLI
 ├── checkpoints/         # Saved model weights
-└── web/                 # Browser-based game UI
+├── web/                 # Browser-based game UI (source)
+└── docs/                # GitHub Pages deployment
 ```
 
 ---
@@ -139,6 +140,15 @@ python play.py --model checkpoints/model_best.pt --difficulty expert
 
 Browser-based game with retro 80s arcade styling.
 
+### Features
+
+- **1P Mode**: Play against neural network AI
+- **2P Mode**: Local two-player
+- **Difficulty Levels**: Easy, Medium, Hard, Expert
+- **Play as X or O**: Choose your side (1P mode)
+- **Score Tracking**: Win/loss stats persist locally
+- **Checkmate Detection**: Highlights forced-win positions
+
 ### Setup
 
 ```bash
@@ -158,4 +168,13 @@ npm run dev
 cd web
 npm run build
 # Output in web/dist/
+```
+
+### Deploy to GitHub Pages
+
+```bash
+cd web
+npm run build
+rm -rf ../docs && cp -r dist ../docs
+# Commit and push - serves from /docs folder
 ```
