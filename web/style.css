@@ -98,6 +98,26 @@ body {
   white-space: pre;
 }
 
+#scoreboard {
+  font-size: 20px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#scoreboard .piece.x, #scoreboard #score-x {
+  color: var(--color-x);
+}
+
+#scoreboard .piece.o, #scoreboard #score-o {
+  color: var(--color-o);
+}
+
+#scoreboard .score-separator {
+  color: var(--color-text);
+}
+
 /* =============================================================================
    Status Display
    ============================================================================= */
