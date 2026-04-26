@@ -437,22 +437,9 @@ async function makeAIMove(): Promise<void> {
   const legalMoves = getLegalMoves(state.board);
   if (legalMoves.length === 0) return;
 
-  // Use rules-based AI for v3, neural network otherwise
-  let move: number;
+  // Random AI implementation for prototype phase
+  const move = legalMoves[Math.floor(Math.random() * legalMoves.length)];
   const currentPlayer = getCurrentPlayer(state.board);
-
-  try {
-    if (isRulesAI()) {
-      move = getRulesMove(state.board, currentPlayer);
-    } else {
-      const result = await getAIMove(state.board, state.difficulty);
-      move = result.move;
-    }
-  } catch (error) {
-    // Fallback to random move - never show error to user
-    console.error("AI move calculation failed, using random:", error);
-    move = legalMoves[Math.floor(Math.random() * legalMoves.length)];
-  }
 
   // Calculate score BEFORE making the move
   const moveScore = calculateMoveScore(state.board, move, currentPlayer);
