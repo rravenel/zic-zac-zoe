@@ -34,10 +34,9 @@ If a move contributes to $N$ distinct lines where $L > 1$, the scores are combin
   - **Player O Score:** Displayed in the color of Player O's tokens.
 
 ## AI & Opponent
-- **Existing Model:** The game will utilize the current AlphaZero-style neural network.
-- **Known Limitation:** The AI was trained on the "Connect 4/Avoid 3" win/loss condition. While it will still prioritize making lines and avoiding triples, its value function will be misaligned with the new cumulative points system.
-- **AI Search Constraint:** Since early terminal states (4-in-a-row) are removed, the MCTS search depth or time-per-move must be constrained to prevent the AI from over-calculating deep into the full-board state space.
-- **Future Work:** This serves as a "playable prototype" until a new model can be trained on the scoring-based rewards.
+- **Prototype Logic:** For this initial play-testing phase, the AI will perform **completely random legal moves**.
+- **Rationale:** Disconnecting the existing Neural Network and Tactical Rules prevents the AI from being biased by old "Connect-4" winning conditions, providing a "neutral" opponent to help evaluate the feel of the points-based scoring.
+- **Future Work:** New tactical rules and a retrained model will be implemented after initial human play-testing is complete.
 
 ---
 

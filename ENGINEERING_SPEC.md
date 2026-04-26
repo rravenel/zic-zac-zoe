@@ -35,9 +35,13 @@ This document outlines the technical implementation details for transitioning Zi
   - Manually verify layout stability in the browser.
   - Ensure UI-based "Game Over" triggers correctly only when the board is full.
 
-## 4. AI Compatibility (`web/src/ai.ts`)
-- **MCTS Update:** Ensure the search tree can handle the full-board depth. Limit search time/depth to keep AI moves responsive (~500ms).
-- **Inference:** The model will continue to output move probabilities; the game controller will simply apply those moves regardless of the model's "value" estimation of the board.
+## 4. AI Compatibility (`web/src/main.ts`)
+- **Move Logic:** Update `makeAIMove` in `web/src/main.ts` to bypass the existing `getAIMove` and `getRulesMove` logic.
+- **Implementation:** The AI should select a random index from the list returned by `getLegalMoves(state.board)`.
+- **Disconnection:** The existing `ai.ts` and `rules-ai.ts` modules should remain unused by the game controller for this prototype phase.
+- **Testing:**
+  - Verify that the AI selects a valid legal move on every turn.
+  - Ensure the AI continues to play until the board is completely full.
 
 ## General Testing Mandates
 - **Fidelity:** All new logic must have corresponding tests.

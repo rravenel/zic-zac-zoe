@@ -29,7 +29,7 @@
 | Task 3.3 | Disable winning line highlighting | ✅ Completed |
 | Task 3.4 | Update meta description | ✅ Completed |
 | **Phase 4: AI & Finalization** | | |
-| Task 4.1 | Constrain MCTS search depth/time | 🌑 Pending |
+| Task 4.1 | Implement random AI move logic | 🌑 Pending |
 | Task 4.2 | Update game end winner/stats logic | 🌑 Pending |
 
 ## Legend

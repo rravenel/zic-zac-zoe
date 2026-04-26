@@ -32,8 +32,6 @@
 - [ ] **Task 3.4:** Update `<meta name="description">` in `web/index.html` with new scoring rules.
 
 ## Phase 4: AI & Finalization
-- [ ] **Task 4.1:** Update MCTS in `web/src/ai.ts`.
-  - **Depth Control:** Truncate rollouts/simulations to prevent 36-move calculations per node.
-  - **Heuristic:** Use `calculateMoveScore` to guide the model's value estimation during search.
+- [ ] **Task 4.1:** Update `makeAIMove` in `web/src/main.ts` to implement random move selection (bypassing NN and tactical rules).
 - [ ] **Task 4.2:** Update game end logic in `web/src/main.ts`.
   - **Stats:** In case of a tie, neither `won` nor `lost` stats are incremented.
