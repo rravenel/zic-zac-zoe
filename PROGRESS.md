@@ -5,7 +5,7 @@
 - **Stopping Work:** When stopping work on a task, update its status to either ✅ **Completed** or ❌ **Blocked**, and commit the work to git.
 - **Finalization:** Ensure the status is updated before every commit or session handover. All completed or blocked work must be pushed.
 
-## Overall Status: 20% Complete
+## Overall Status: 25% Complete
 
 | Task | Description | Status |
 | :--- | :--- | :--- |
@@ -14,7 +14,7 @@
 | Task 1.2 | Refactor `check_result` / `check_result_fast` | ✅ Completed |
 | Task 1.3 | Update `Board` class (score support) | ✅ Completed |
 | Task 1.4 | Scoring Unit Tests (Python) | ✅ Completed |
-| Task 1.5 | Update `test_game.py` (cleanup & scores) | 🌑 Pending |
+| Task 1.5 | Update `test_game.py` (cleanup & scores) | ✅ Completed |
 | Task 1.6 | Audit `test_tactical.py` (cleanup) | 🌑 Pending |
 | **Phase 2: Web Logic** | | |
 | Task 2.1 | Implement `calculateMoveScore` (TS parity) | 🌑 Pending |
