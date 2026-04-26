@@ -11,6 +11,10 @@ This document outlines the technical implementation details for transitioning Zi
   - **Multi-Line:** (Sum of Line Scores) × N, where N is count of axes with $L > 1$.
   - **Lone Tile:** If N=0 (no neighbors), the move scores exactly **1 point**.
 - **End State:** Modify `check_result` to return terminal only when `board.is_full()`. Winner is determined by final score comparison.
+- **Testing:**
+  - Create `test_scoring_logic.py` and `web/src/test-scoring.ts` to verify new scoring rules.
+  - Update `test_game.py` to reflect the new termination logic (removal of early wins/losses).
+  - Remove any "Win/Loss" specific tactical tests that are no longer applicable (e.g., specific checkmate patterns if they no longer end the game).
 
 ## 2. State Management & Stats
 - **Frontend State (`web/src/main.ts`):** 
@@ -18,6 +22,9 @@ This document outlines the technical implementation details for transitioning Zi
   - **Stats:** Retain binary Win/Loss tracking in `localStorage`. A "Win" is simply having the higher score at the terminal state.
 - **Backend Model (`game.py`):**
   - Update `Board` class to support score accumulation.
+- **Testing:**
+  - Update unit tests for `Board` (in `test_game.py`) to verify `score_x` and `score_o` are correctly tracked, copied, and included in hash/equality.
+  - Verify stats update logic in the frontend with new point-based win conditions.
 
 ## 3. UI and Rendering (`web/src/main.ts`)
 - **Header Refactor:** Replace existing rules container with the single-line scoreboard.
@@ -25,7 +32,18 @@ This document outlines the technical implementation details for transitioning Zi
   - **Formatting:** Use a 5-character right-aligned field for each score (e.g., `"    0"`, `" 1234"`). This preserves the 4-space visual gap at start and ensures at least one space remains next to the colon if the score reaches 4 digits.
   - **Stability:** Use monospaced font elements to prevent layout shift.
 - **Visuals:** Disable any existing "last move" or "winning line" highlighting that relies on the old terminal state logic to simplify the prototype transition.
+- **Testing:**
+  - Manually verify layout stability in the browser.
+  - Ensure UI-based "Game Over" triggers correctly only when the board is full.
 
 ## 4. AI Compatibility (`web/src/ai.ts`)
 - **MCTS Update:** Ensure the search tree can handle the full-board depth. Limit search time/depth to keep AI moves responsive (~500ms).
 - **Inference:** The model will continue to output move probabilities; the game controller will simply apply those moves regardless of the model's "value" estimation of the board.
+- **Testing:**
+  - Update `web/src/test-checkmate.ts` (or equivalent) to verify AI makes legal moves and attempts to maximize score (using the new heuristic if implemented).
+  - Remove tests specifically asserting early AI wins/losses via Connect-4.
+
+## General Testing Mandates
+- **Fidelity:** All new logic must have corresponding tests.
+- **Cleanup:** Tests for removed code/logic must be deleted immediately.
+- **Maintenance:** Stale or incorrect tests are not permitted. The test suite must remain clean and 100% green.

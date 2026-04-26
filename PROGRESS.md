@@ -5,7 +5,7 @@
 - **Stopping Work:** When stopping work on a task, update its status to either ✅ **Completed** or ❌ **Blocked**, and commit the work to git.
 - **Finalization:** Ensure the status is updated before every commit or session handover. All completed or blocked work must be pushed.
 
-## Overall Status: 21% Complete
+## Overall Status: 19% Complete
 
 | Task | Description | Status |
 | :--- | :--- | :--- |
@@ -14,6 +14,8 @@
 | Task 1.2 | Refactor `check_result` / `check_result_fast` | ✅ Completed |
 | Task 1.3 | Update `Board` class (score support) | ✅ Completed |
 | Task 1.4 | Scoring Unit Tests (Python) | 🏗️ In Progress |
+| Task 1.5 | Update `test_game.py` (cleanup & scores) | 🌑 Pending |
+| Task 1.6 | Audit other Python tests | 🌑 Pending |
 | **Phase 2: Web Logic** | | |
 | Task 2.1 | Implement `calculateMoveScore` (TS parity) | 🌑 Pending |
 | Task 2.2 | Update `checkResult` / `checkResultFast` | 🌑 Pending |
@@ -22,6 +24,7 @@
 | Task 2.5 | Verify AI inference handling | 🌑 Pending |
 | Task 2.6 | Update Game Reset logic (score zeroing) | 🌑 Pending |
 | Task 2.7 | Scoring Unit Tests (TypeScript) | 🌑 Pending |
+| Task 2.8 | Audit `web/src/test-checkmate.ts` | 🌑 Pending |
 | **Phase 3: UI & Rendering** | | |
 | Task 3.1 | Replace rules header with scoreboard | 🌑 Pending |
 | Task 3.2 | Implement `updateScoreboardDisplay` (fixed-width) | 🌑 Pending |
