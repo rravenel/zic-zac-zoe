@@ -91,6 +91,13 @@ body {
   color: var(--color-win);
 }
 
+.score-value {
+  display: inline-block;
+  width: 5ch;
+  text-align: right;
+  white-space: pre;
+}
+
 /* =============================================================================
    Status Display
    ============================================================================= */

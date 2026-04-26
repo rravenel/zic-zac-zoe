@@ -176,6 +176,8 @@ const btnMode = document.getElementById("btn-mode")!;
 const btnPlayer = document.getElementById("btn-player")!;
 const btnDifficulty = document.getElementById("btn-difficulty")!;
 const btnNewGame = document.getElementById("btn-new-game")!;
+const scoreXEl = document.getElementById("score-x")!;
+const scoreOEl = document.getElementById("score-o")!;
 
 // Difficulty levels for cycling (1-4 stars)
 const DIFFICULTY_LEVELS: Difficulty[] = ["easy", "medium", "hard", "expert"];
@@ -207,62 +209,6 @@ function renderBoard(): void {
   // Update board's turn class for hover styling in 2P mode
   const currentPlayer = getCurrentPlayer(state.board);
   boardEl.classList.toggle("o-turn", isTwoPlayerMode() && currentPlayer === Player.O);
-
-  // Pre-compute game end highlight info
-  let endHighlightClass: string | null = null;
-  let endIndices: Set<number> | null = null;
-  let cruxIndices: Set<number> | null = null;
-
-  if (state.gameOver && state.result) {
-    const { result } = state.result;
-    if (result !== GameResult.Draw) {
-      const winner = result === GameResult.XWins ? Player.X : Player.O;
-
-      // Determine highlight class based on mode
-      if (isTwoPlayerMode()) {
-        // 2P: winner's color
-        endHighlightClass = winner === Player.X ? "end-x" : "end-o";
-      } else {
-        // 1P: green if human wins, red if AI wins
-        const humanWins = winner === state.humanPlayer;
-        endHighlightClass = humanWins ? "end-green" : "end-red";
-      }
-
-      // Collect indices that ended the game
-      endIndices = new Set([
-        ...state.result.winningIndices,
-        ...state.result.losingIndices,
-      ]);
-    }
-  }
-
-  // For checkmate, find crux cells (empty cells in the threat/suicide patterns)
-  if (state.checkmate?.isCheckmate) {
-    const winner = state.checkmate.loser === Player.X ? Player.O : Player.X;
-
-    // Determine highlight class for checkmate patterns
-    if (isTwoPlayerMode()) {
-      endHighlightClass = winner === Player.X ? "end-x" : "end-o";
-    } else {
-      const humanWins = state.checkmate.loser !== state.humanPlayer;
-      endHighlightClass = humanWins ? "end-green" : "end-red";
-    }
-
-    // Collect all cells in checkmate patterns
-    endIndices = new Set(
-      [...state.checkmate.threatPatterns, ...state.checkmate.suicidePatterns].flat()
-    );
-
-    // Find crux cells - empty cells that would complete patterns
-    cruxIndices = new Set<number>();
-    for (const pattern of [...state.checkmate.threatPatterns, ...state.checkmate.suicidePatterns]) {
-      for (const idx of pattern) {
-        if (state.board[idx] === Player.Empty) {
-          cruxIndices.add(idx);
-        }
-      }
-    }
-  }
 
   cells.forEach((cell, i) => {
     const el = cell as HTMLElement;
@@ -300,26 +246,19 @@ function renderBoard(): void {
       el.classList.add("occupied");
     }
 
-    // Highlight last move with player's color (only during game, not at end)
-    if (i === state.lastMove && piece !== Player.Empty && !state.gameOver) {
-      el.classList.add(piece === Player.X ? "last-move-x" : "last-move-o");
-    }
-
     // Game over state
     if (state.gameOver) {
       el.classList.add("game-over");
-
-      // Apply end highlight to cells that ended the game
-      if (endHighlightClass && endIndices?.has(i)) {
-        el.classList.add(endHighlightClass);
-
-        // Blink crux cells and the last move cell
-        if (cruxIndices?.has(i) || i === state.lastMove) {
-          el.classList.add("crux-blink");
-        }
-      }
     }
   });
+}
+
+/**
+ * Update the scoreboard display with current scores
+ */
+function updateScoreboardDisplay(): void {
+  scoreXEl.textContent = state.playerXScore.toString().padStart(5, " ");
+  scoreOEl.textContent = state.playerOScore.toString().padStart(5, " ");
 }
 
 /**

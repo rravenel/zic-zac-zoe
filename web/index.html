@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#000000" />
-    <meta name="description" content="Zic-Zac-Zoe: A twisted take on tic-tac-toe. Get 4 in a row to win, but 3 in a row loses!" />
+    <meta name="description" content="Zic-Zac-Zoe: Points Variant. A strategic twist on tic-tac-toe where you bridge sequences to score high points!" />
     <title>ZIC-ZAC-ZOE</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
@@ -13,11 +13,13 @@
       <!-- Header -->
       <header class="header">
         <h1 class="title">ZIC-ZAC-ZOE</h1>
-        <p class="subtitle">
-          <span class="subtitle-lose">3 IN A ROW LOSES</span>
-          &nbsp;&nbsp;
-          <span class="subtitle-win">4 IN A ROW WINS</span>
-        </p>
+        <div id="scoreboard" class="subtitle">
+          <span class="piece x">X:</span><span id="score-x" class="score-value">    0</span>
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          <span class="score-separator">-</span>
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          <span class="piece o">O:</span><span id="score-o" class="score-value">    0</span>
+        </div>
       </header>
 
       <!-- Game Status -->

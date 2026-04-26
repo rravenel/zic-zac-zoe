@@ -5,7 +5,7 @@
 - **Stopping Work:** When stopping work on a task, update its status to either ✅ **Completed** or ❌ **Blocked**, and commit the work to git.
 - **Finalization:** Ensure the status is updated before every commit or session handover. All completed or blocked work must be pushed.
 
-## Overall Status: 67% Complete
+## Overall Status: 89% Complete
 
 | Task | Description | Status |
 | :--- | :--- | :--- |
@@ -24,10 +24,10 @@
 | Task 2.6 | Update Game Reset logic (score zeroing) | ✅ Completed |
 | Task 2.7 | Scoring Unit Tests (TypeScript) | ✅ Completed |
 | **Phase 3: UI & Rendering** | | |
-| Task 3.1 | Replace rules header with scoreboard | 🌑 Pending |
-| Task 3.2 | Implement `updateScoreboardDisplay` (fixed-width) | 🌑 Pending |
-| Task 3.3 | Disable winning line highlighting | 🌑 Pending |
-| Task 3.4 | Update meta description | 🌑 Pending |
+| Task 3.1 | Replace rules header with scoreboard | ✅ Completed |
+| Task 3.2 | Implement `updateScoreboardDisplay` (fixed-width) | ✅ Completed |
+| Task 3.3 | Disable winning line highlighting | ✅ Completed |
+| Task 3.4 | Update meta description | ✅ Completed |
 | **Phase 4: AI & Finalization** | | |
 | Task 4.1 | Constrain MCTS search depth/time | 🌑 Pending |
 | Task 4.2 | Update game end winner/stats logic | 🌑 Pending |
