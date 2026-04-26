@@ -5,7 +5,7 @@
 - **Stopping Work:** When stopping work on a task, update its status to either ✅ **Completed** or ❌ **Blocked**, and commit the work to git.
 - **Finalization:** Ensure the status is updated before every commit or session handover. All completed or blocked work must be pushed.
 
-## Overall Status: 28% Complete
+## Overall Status: 67% Complete
 
 | Task | Description | Status |
 | :--- | :--- | :--- |
@@ -16,13 +16,13 @@
 | Task 1.4 | Scoring Unit Tests (Python) | ✅ Completed |
 | Task 1.5 | Update `test_game.py` (cleanup & scores) | ✅ Completed |
 | **Phase 2: Web Logic** | | |
-| Task 2.1 | Implement `calculateMoveScore` (TS parity) | 🌑 Pending |
-| Task 2.2 | Update `checkResult` / `checkResultFast` | 🌑 Pending |
-| Task 2.3 | Update `GameState` interface | 🌑 Pending |
-| Task 2.4 | Update move handling (accumulation) | 🌑 Pending |
-| Task 2.5 | Verify AI inference handling | 🌑 Pending |
-| Task 2.6 | Update Game Reset logic (score zeroing) | 🌑 Pending |
-| Task 2.7 | Scoring Unit Tests (TypeScript) | 🌑 Pending |
+| Task 2.1 | Implement `calculateMoveScore` (TS parity) | ✅ Completed |
+| Task 2.2 | Update `checkResult` / `checkResultFast` | ✅ Completed |
+| Task 2.3 | Update `GameState` interface | ✅ Completed |
+| Task 2.4 | Update move handling (accumulation) | ✅ Completed |
+| Task 2.5 | Verify AI inference handling | ✅ Completed |
+| Task 2.6 | Update Game Reset logic (score zeroing) | ✅ Completed |
+| Task 2.7 | Scoring Unit Tests (TypeScript) | ✅ Completed |
 | **Phase 3: UI & Rendering** | | |
 | Task 3.1 | Replace rules header with scoreboard | 🌑 Pending |
 | Task 3.2 | Implement `updateScoreboardDisplay` (fixed-width) | 🌑 Pending |

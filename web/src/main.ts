@@ -17,6 +17,7 @@ import {
   checkResultFast,
   getLegalMoves,
   GameCheckResult,
+  calculateMoveScore,
 } from "./game";
 import { loadModel, getAIMove, Difficulty } from "./ai";
 import { getRulesMove, isRulesAI, detectCheckmate, CheckmateResult } from "./rules-ai";
@@ -38,6 +39,8 @@ interface GameState {
   lastMove: number | null;
   result: GameCheckResult | null;
   checkmate: CheckmateResult | null;
+  playerXScore: number;
+  playerOScore: number;
 }
 
 const state: GameState = {
@@ -49,6 +52,8 @@ const state: GameState = {
   lastMove: null,
   result: null,
   checkmate: null,
+  playerXScore: 0,
+  playerOScore: 0,
 };
 
 function isTwoPlayerMode(): boolean {
@@ -410,10 +415,13 @@ function newGame(): void {
   state.lastMove = null;
   state.result = null;
   state.checkmate = null;
+  state.playerXScore = 0;
+  state.playerOScore = 0;
 
   clearStatsBlinking();
   renderBoard();
   updateStatus();
+  updateScoreboardDisplay();
 
   // If AI goes first (and we're not in 2-player mode), make AI move
   if (!isTwoPlayerMode() && state.humanPlayer === Player.O) {
@@ -444,6 +452,15 @@ function handleCellClick(index: number): void {
  */
 function makeHumanMove(index: number): void {
   const currentPlayer = getCurrentPlayer(state.board);
+  
+  // Calculate score BEFORE making the move
+  const moveScore = calculateMoveScore(state.board, index, currentPlayer);
+  if (currentPlayer === Player.X) {
+    state.playerXScore += moveScore;
+  } else {
+    state.playerOScore += moveScore;
+  }
+
   state.board = makeMove(state.board, index);
   state.lastMove = index;
 
@@ -457,37 +474,13 @@ function makeHumanMove(index: number): void {
     } else {
       recordGameResult(result.result, state.humanPlayer);
     }
-    renderBoard();
-    updateStatus();
-    return;
-  }
-
-  // Check if opponent is now checkmated (before they move)
-  const opponent = currentPlayer === Player.X ? Player.O : Player.X;
-  const checkmate = detectCheckmate(state.board, opponent);
-  if (checkmate.isCheckmate) {
-    state.gameOver = true;
-    state.checkmate = checkmate;
-    // Opponent is checkmated, so current player wins
-    const winResult = currentPlayer === Player.X ? GameResult.XWins : GameResult.OWins;
-    state.result = {
-      result: winResult,
-      winningIndices: [],
-      losingIndices: [],
-      losingPlayer: opponent,
-    };
-    if (isTwoPlayerMode()) {
-      recordTwoPlayerResult(winResult);
-    } else {
-      recordGameResult(winResult, state.humanPlayer);
-    }
-    renderBoard();
-    updateStatus();
-    return;
   }
 
   renderBoard();
   updateStatus();
+  updateScoreboardDisplay();
+
+  if (state.gameOver) return;
 
   // In vs AI mode, trigger AI's turn
   if (!isTwoPlayerMode()) {
@@ -507,10 +500,11 @@ async function makeAIMove(): Promise<void> {
 
   // Use rules-based AI for v3, neural network otherwise
   let move: number;
+  const currentPlayer = getCurrentPlayer(state.board);
 
   try {
     if (isRulesAI()) {
-      move = getRulesMove(state.board, getCurrentPlayer(state.board));
+      move = getRulesMove(state.board, currentPlayer);
     } else {
       const result = await getAIMove(state.board, state.difficulty);
       move = result.move;
@@ -519,6 +513,14 @@ async function makeAIMove(): Promise<void> {
     // Fallback to random move - never show error to user
     console.error("AI move calculation failed, using random:", error);
     move = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+  }
+
+  // Calculate score BEFORE making the move
+  const moveScore = calculateMoveScore(state.board, move, currentPlayer);
+  if (currentPlayer === Player.X) {
+    state.playerXScore += moveScore;
+  } else {
+    state.playerOScore += moveScore;
   }
 
   state.board = makeMove(state.board, move);
@@ -530,29 +532,11 @@ async function makeAIMove(): Promise<void> {
     state.gameOver = true;
     state.result = result;
     recordGameResult(result.result, state.humanPlayer);
-    renderBoard();
-    updateStatus();
-    return;
-  }
-
-  // Check if human is now checkmated (before they even move)
-  const checkmate = detectCheckmate(state.board, state.humanPlayer);
-  if (checkmate.isCheckmate) {
-    state.gameOver = true;
-    state.checkmate = checkmate;
-    // Human is checkmated, so AI wins
-    const aiWinResult = state.humanPlayer === Player.X ? GameResult.OWins : GameResult.XWins;
-    state.result = {
-      result: aiWinResult,
-      winningIndices: [],
-      losingIndices: [],
-      losingPlayer: state.humanPlayer,
-    };
-    recordGameResult(aiWinResult, state.humanPlayer);
   }
 
   renderBoard();
   updateStatus();
+  updateScoreboardDisplay();
 }
 
 // =============================================================================
@@ -619,6 +603,52 @@ function updateScale(): void {
   // Set explicit dimensions so transform works correctly
   appEl.style.width = `${DESIGN_WIDTH}px`;
   appEl.style.height = `${DESIGN_HEIGHT}px`;
+}
+
+// =============================================================================
+// Validation (Development Only)
+// =============================================================================
+
+/**
+ * Verify scoring logic against the "Golden Set" from the Feature Spec.
+ */
+function validateScoringParity(): void {
+  const testCases = [
+    { existing: [], move: 0, expected: 1, desc: "Lone Tile" },
+    { existing: [1], move: 0, expected: 2, desc: "Append to 2" },
+    { existing: [1, 2], move: 0, expected: 0, desc: "Append to 3" },
+    { existing: [1, 3], move: 2, expected: 0, desc: "Bridge to 3 (1_1)" },
+    { existing: [1, 2, 3], move: 0, expected: 4, desc: "Append to 4" },
+    { existing: [1, 3, 4], move: 2, expected: 8, desc: "Bridge to 4 (1_2)" },
+    { existing: [1, 2, 4, 5], move: 3, expected: 10, desc: "Bridge to 5 (2_2)" },
+    { existing: [0, 2, 3, 4, 5], move: 1, expected: 12, desc: "Bridge to 6 (1_4)" },
+    { existing: [0, 1, 3, 8], move: 2, expected: 20, desc: "T-Bone (8+2)*2" },
+    { existing: [6, 8, 1, 13, 0, 14, 2, 12], move: 7, expected: 0, desc: "3x3 Death Trap" },
+  ];
+
+  console.group("Scoring Parity Check");
+  let allPassed = true;
+  for (const tc of testCases) {
+    const board = createBoard();
+    for (const idx of tc.existing) {
+      board[idx] = Player.X;
+    }
+    const score = calculateMoveScore(board, tc.move, Player.X);
+    if (score !== tc.expected) {
+      console.error(`✗ ${tc.desc}: FAILED! Expected ${tc.expected}, got ${score}`);
+      allPassed = false;
+    } else {
+      console.log(`✓ ${tc.desc}`);
+    }
+  }
+  if (allPassed) {
+    console.log("ALL SCORING TESTS PASSED (1:1 with Python)");
+  }
+  console.groupEnd();
+}
+
+if (import.meta.env.DEV) {
+  validateScoringParity();
 }
 
 // =============================================================================

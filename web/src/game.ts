@@ -165,6 +165,77 @@ function getMaxConsecutive(
 }
 
 /**
+ * Calculate the score for a specific move based on the points variant rules.
+ */
+export function calculateMoveScore(
+  board: BoardState,
+  moveIndex: number,
+  player: Player
+): number {
+  const [row, col] = indexToCoord(moveIndex);
+  const directions = [
+    [0, 1],
+    [1, 0],
+    [1, 1],
+    [1, -1],
+  ];
+
+  const lineScores: number[] = [];
+
+  for (const [dr, dc] of directions) {
+    // Scan in negative direction
+    let l1 = 0;
+    let r = row - dr;
+    let c = col - dc;
+    while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
+      if (board[coordToIndex(r, c)] === player) {
+        l1++;
+        r -= dr;
+        c -= dc;
+      } else {
+        break;
+      }
+    }
+
+    // Scan in positive direction
+    let l2 = 0;
+    r = row + dr;
+    c = col + dc;
+    while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
+      if (board[coordToIndex(r, c)] === player) {
+        l2++;
+        r += dr;
+        c += dc;
+      } else {
+        break;
+      }
+    }
+
+    const totalL = l1 + l2 + 1;
+
+    if (totalL > 1) {
+      // Base Score logic
+      let base = totalL === 3 ? 0 : totalL;
+
+      // Bridge Bonus: 2x if move has neighbors on both sides of this axis
+      if (l1 > 0 && l2 > 0) {
+        base *= 2;
+      }
+
+      lineScores.push(base);
+    }
+  }
+
+  const n = lineScores.length;
+  if (n === 0) {
+    return 1; // Lone tile rule
+  }
+
+  const sum = lineScores.reduce((a, b) => a + b, 0);
+  return sum * n;
+}
+
+/**
  * Result of checking game state
  */
 export interface GameCheckResult {
@@ -178,47 +249,7 @@ export interface GameCheckResult {
  * Check if the game has ended
  */
 export function checkResult(board: BoardState): GameCheckResult {
-  const xResult = getMaxConsecutive(board, Player.X);
-  const oResult = getMaxConsecutive(board, Player.O);
-
-  // 4-beats-3 rule: Check win BEFORE loss.
-  // If a move creates both 4-in-a-row and 3-in-a-row, the 4 wins.
-  if (xResult.count >= WIN_LENGTH) {
-    return {
-      result: GameResult.XWins,
-      winningIndices: xResult.indices,
-      losingIndices: [],
-      losingPlayer: null,
-    };
-  }
-  if (oResult.count >= WIN_LENGTH) {
-    return {
-      result: GameResult.OWins,
-      winningIndices: oResult.indices,
-      losingIndices: [],
-      losingPlayer: null,
-    };
-  }
-
-  // Check for loss (exactly 3 in a row) - only if no win
-  if (xResult.count === LOSE_LENGTH) {
-    return {
-      result: GameResult.OWins,
-      winningIndices: [],
-      losingIndices: xResult.indices,
-      losingPlayer: Player.X,
-    };
-  }
-  if (oResult.count === LOSE_LENGTH) {
-    return {
-      result: GameResult.XWins,
-      winningIndices: [],
-      losingIndices: oResult.indices,
-      losingPlayer: Player.O,
-    };
-  }
-
-  // Check for draw (board full)
+  // In the points variant, the game only ends when the board is full.
   const moveCount = board.filter((cell) => cell !== Player.Empty).length;
   if (moveCount === BOARD_SIZE * BOARD_SIZE) {
     return {
@@ -242,73 +273,9 @@ export function checkResult(board: BoardState): GameCheckResult {
  */
 export function checkResultFast(
   board: BoardState,
-  lastMove: number
+  _lastMove: number
 ): GameCheckResult {
   const moveCount = board.filter((cell) => cell !== Player.Empty).length;
-  const lastPlayer = moveCount % 2 === 1 ? Player.X : Player.O;
-  const [lastRow, lastCol] = indexToCoord(lastMove);
-
-  // Check all 4 directions through the last move
-  const directions = [
-    [0, 1],
-    [1, 0],
-    [1, 1],
-    [1, -1],
-  ];
-
-  let maxCount = 0;
-  let maxIndices: number[] = [];
-
-  for (const [dRow, dCol] of directions) {
-    // Find connected in positive direction
-    const positive = findConnected(
-      board,
-      lastRow + dRow,
-      lastCol + dCol,
-      dRow,
-      dCol,
-      lastPlayer
-    );
-
-    // Find connected in negative direction
-    const negative = findConnected(
-      board,
-      lastRow - dRow,
-      lastCol - dCol,
-      -dRow,
-      -dCol,
-      lastPlayer
-    );
-
-    // Combine with the piece itself
-    const indices = [...negative.reverse(), lastMove, ...positive];
-    if (indices.length > maxCount) {
-      maxCount = indices.length;
-      maxIndices = indices;
-    }
-  }
-
-  // 4-beats-3 rule: Check win BEFORE loss.
-  // If a move creates both 4-in-a-row and 3-in-a-row, the 4 wins.
-  if (maxCount >= WIN_LENGTH) {
-    return {
-      result: lastPlayer === Player.X ? GameResult.XWins : GameResult.OWins,
-      winningIndices: maxIndices,
-      losingIndices: [],
-      losingPlayer: null,
-    };
-  }
-
-  // Check loss (exactly 3) - only if no win
-  if (maxCount === LOSE_LENGTH) {
-    const winner = lastPlayer === Player.X ? Player.O : Player.X;
-    return {
-      result: winner === Player.X ? GameResult.XWins : GameResult.OWins,
-      winningIndices: [],
-      losingIndices: maxIndices,
-      losingPlayer: lastPlayer,
-    };
-  }
 
   // Check draw
   if (moveCount === BOARD_SIZE * BOARD_SIZE) {
