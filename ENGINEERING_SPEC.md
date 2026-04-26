@@ -14,7 +14,6 @@ This document outlines the technical implementation details for transitioning Zi
 - **Testing:**
   - Create `test_scoring_logic.py` and `web/src/test-scoring.ts` using a **Shared Golden Set** of test cases (including lone-tile, bridges, and multi-line intersections) to ensure 1:1 parity between engines.
   - Update `test_game.py` to reflect the fixed 36-move episode length and point-based terminal rewards.
-  - Remove any "Win/Loss" specific tactical tests that are no longer applicable (e.g., specific checkmate patterns).
 
 ## 2. State Management & Stats
 - **Frontend State (`web/src/main.ts`):** 
@@ -39,9 +38,6 @@ This document outlines the technical implementation details for transitioning Zi
 ## 4. AI Compatibility (`web/src/ai.ts`)
 - **MCTS Update:** Ensure the search tree can handle the full-board depth. Limit search time/depth to keep AI moves responsive (~500ms).
 - **Inference:** The model will continue to output move probabilities; the game controller will simply apply those moves regardless of the model's "value" estimation of the board.
-- **Testing:**
-  - Update AI tests (`web/src/test-checkmate.ts` and `test_tactical.py`) to verify legal move selection and score-maximization behavior.
-  - Remove assertions in all AI test suites that expect early termination via Connect-4 or Connect-3.
 
 ## General Testing Mandates
 - **Fidelity:** All new logic must have corresponding tests.

@@ -14,8 +14,6 @@
 - [ ] **Task 1.4:** Add unit tests in `test_scoring_logic.py` verifying all `FEATURE_SPEC` examples (The "Golden Set").
 - [ ] **Task 1.5:** Update `test_game.py`.
   - Add tests for score-based state identity and accumulation.
-- [ ] **Task 1.6:** Audit and clean up `test_tactical.py`.
-  - Remove stale tactical assertions that rely on early termination.
 
 ## Phase 2: Web Logic (TypeScript)
 - [ ] **Task 2.1:** Implement `calculateMoveScore` in `web/src/game.ts` (1:1 Port of Python).
@@ -25,8 +23,6 @@
 - [ ] **Task 2.5:** Verify AI inference loop handling of non-terminal states.
 - [ ] **Task 2.6:** Update `resetGame` logic in `web/src/main.ts` to zero out scores.
 - [ ] **Task 2.7:** Add unit tests in `web/src/test-scoring.ts`.
-- [ ] **Task 2.8:** **[NEW]** Audit and clean up `web/src/test-checkmate.ts`.
-  - Refactor or remove tests asserting checkmate as a game-ending state.
 
 ## Phase 3: UI & Rendering
 - [ ] **Task 3.1:** Replace `.subtitle` in `web/index.html` with a scoreboard div (`#scoreboard`).
