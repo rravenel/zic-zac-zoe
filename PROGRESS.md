@@ -2,18 +2,18 @@
 
 ## Maintenance Instructions
 - **Active Development:** Mark a task as 🏗️ **In Progress** when starting it for the first time or resuming it after a pause.
-- **Stopping Work:** When stopping work on a task, update its status to either ✅ **Completed** or ❌ **Blocked**.
-- **Finalization:** Ensure the status is updated before every commit or session handover.
+- **Stopping Work:** When stopping work on a task, update its status to either ✅ **Completed** or ❌ **Blocked**, and commit the work to git.
+- **Finalization:** Ensure the status is updated before every commit or session handover. All completed or blocked work must be pushed.
 
-## Overall Status: 0% Complete
+## Overall Status: 21% Complete
 
 | Task | Description | Status |
 | :--- | :--- | :--- |
 | **Phase 1: Python Backend** | | |
-| Task 1.1 | Implement `calculate_move_score` | 🌑 Pending |
-| Task 1.2 | Refactor `check_result` / `check_result_fast` | 🌑 Pending |
-| Task 1.3 | Update `Board` class (score support) | 🌑 Pending |
-| Task 1.4 | Scoring Unit Tests (Python) | 🌑 Pending |
+| Task 1.1 | Implement `calculate_move_score` | ✅ Completed |
+| Task 1.2 | Refactor `check_result` / `check_result_fast` | ✅ Completed |
+| Task 1.3 | Update `Board` class (score support) | ✅ Completed |
+| Task 1.4 | Scoring Unit Tests (Python) | 🏗️ In Progress |
 | **Phase 2: Web Logic** | | |
 | Task 2.1 | Implement `calculateMoveScore` (TS parity) | 🌑 Pending |
 | Task 2.2 | Update `checkResult` / `checkResultFast` | 🌑 Pending |

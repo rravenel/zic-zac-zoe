@@ -4,7 +4,7 @@ always use .venv when appropriate (like running python)
 - **Commit & Push:** All work must be committed and pushed to the remote repository.
 - **Feature Branch Workflow:** This is a solo project. We are working directly in a feature branch; do not submit a PR for every task.
 - **Commit Granularity:** Commits must contain work for a single task only.
-- **Progress Tracking:** Always read `PROGRESS.md` and follow the maintenance instructions there to ensure the project state is accurately reflected.
+- **Progress Tracking:** Always read `PROGRESS.md` and follow the maintenance instructions there to ensure the project state is accurately reflected. Whenever a task is marked as ✅ **Completed** or ❌ **Blocked**, the corresponding work must be committed to git and pushed.
 - **Incomplete Work:** If a task cannot be completed in one go, the partial work must be preserved (e.g., as a draft or WIP commit) and must not interfere with the functionality of the rest of the project.
 
 ## Coding Standards

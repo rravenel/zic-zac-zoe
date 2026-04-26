@@ -60,17 +60,19 @@ class Board:
     Position mapping: index = row * 6 + col
     """
 
-    def __init__(self, state: Optional[List[int]] = None):
+    def __init__(self, state: Optional[List[int]] = None, score_x: int = 0, score_o: int = 0):
         """Initialize board, optionally from existing state."""
         if state is not None:
             self.state = state.copy()
         else:
             self.state = [Player.EMPTY] * (BOARD_SIZE * BOARD_SIZE)
         self._move_count = sum(1 for cell in self.state if cell != Player.EMPTY)
+        self.score_x = score_x
+        self.score_o = score_o
 
     def copy(self) -> 'Board':
         """Create a deep copy of the board."""
-        new_board = Board(self.state)
+        new_board = Board(self.state, self.score_x, self.score_o)
         new_board._move_count = self._move_count
         return new_board
 
@@ -126,9 +128,19 @@ class Board:
         if self.state[index] != Player.EMPTY:
             raise ValueError(f"Position {index} is not empty")
 
+        player = self.current_player()
+        # Calculate score for this move BEFORE applying it to the board
+        move_score = calculate_move_score(self, index, player)
+
         new_board = self.copy()
-        new_board.state[index] = self.current_player()
+        new_board.state[index] = player
         new_board._move_count += 1
+
+        if player == Player.X:
+            new_board.score_x += move_score
+        else:
+            new_board.score_o += move_score
+
         return new_board
 
     def make_move_inplace(self, index: int) -> None:
@@ -136,22 +148,35 @@ class Board:
         if self.state[index] != Player.EMPTY:
             raise ValueError(f"Position {index} is not empty")
 
-        self.state[index] = self.current_player()
+        player = self.current_player()
+        # Calculate score for this move BEFORE applying it to the board
+        move_score = calculate_move_score(self, index, player)
+
+        self.state[index] = player
         self._move_count += 1
+
+        if player == Player.X:
+            self.score_x += move_score
+        else:
+            self.score_o += move_score
 
     # -------------------------------------------------------------------------
     # Hashing (for deduplication)
     # -------------------------------------------------------------------------
 
     def hash(self) -> int:
-        """Return hash of board state."""
-        return hash(tuple(self.state))
+        """Return hash of board state, including scores."""
+        return hash((tuple(self.state), self.score_x, self.score_o))
 
     def __hash__(self) -> int:
         return self.hash()
 
-    def __eq__(self, other: 'Board') -> bool:
-        return self.state == other.state
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Board):
+            return False
+        return (self.state == other.state and
+                self.score_x == other.score_x and
+                self.score_o == other.score_o)
 
     # -------------------------------------------------------------------------
     # Display
@@ -166,6 +191,61 @@ class Board:
             cells = [symbols[self.get(row, col)] for col in range(BOARD_SIZE)]
             lines.append(f"{row} " + " ".join(cells))
         return "\n".join(lines)
+
+
+# =============================================================================
+# Scoring Engine
+# =============================================================================
+
+def calculate_move_score(board: 'Board', move_index: int, player: Player) -> int:
+    """
+    Calculate the score for a specific move based on the points variant rules.
+
+    Rules:
+    - Base score is the new length L (L=3 -> 0).
+    - Bridge Bonus: 2x Base Score if move connects two existing segments.
+    - Multi-Line Multiplier N: (Sum of line scores) * N (where N = count of axes with L > 1).
+    - Lone Tile: If N=0 (no neighbors), the move scores exactly 1 point.
+    """
+    row, col = move_index // BOARD_SIZE, move_index % BOARD_SIZE
+    directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+
+    line_scores = []
+
+    for dr, dc in directions:
+        # Scan in negative direction
+        l1 = 0
+        r, c = row - dr, col - dc
+        while 0 <= r < BOARD_SIZE and 0 <= c < BOARD_SIZE and board.get(r, c) == player:
+            l1 += 1
+            r -= dr
+            c -= dc
+
+        # Scan in positive direction
+        l2 = 0
+        r, c = row + dr, col + dc
+        while 0 <= r < BOARD_SIZE and 0 <= c < BOARD_SIZE and board.get(r, c) == player:
+            l2 += 1
+            r += dr
+            c += dc
+
+        total_l = l1 + l2 + 1
+
+        if total_l > 1:
+            # Base Score logic
+            base = 0 if total_l == 3 else total_l
+
+            # Bridge Bonus: 2x if move has neighbors on both sides of this axis
+            if l1 > 0 and l2 > 0:
+                base *= 2
+
+            line_scores.append(base)
+
+    n = len(line_scores)
+    if n == 0:
+        return 1  # Lone tile rule
+
+    return sum(line_scores) * n
 
 
 # =============================================================================
@@ -221,47 +301,10 @@ def check_result(board: Board) -> GameResult:
     Check if the game has ended.
 
     Returns:
-        GameResult.X_WINS if X wins (X got 4, or O got exactly 3)
-        GameResult.O_WINS if O wins (O got 4, or X got exactly 3)
-        GameResult.DRAW if board is full with no winner
+        GameResult.DRAW if board is full
         GameResult.ONGOING if game continues
     """
-    x_max = 0  # Max consecutive X pieces in any line
-    o_max = 0  # Max consecutive O pieces in any line
-
-    # Check each possible line for consecutive pieces
-    for line in ALL_LINES:
-        # Count consecutive pieces in this line
-        x_count = 0
-        o_count = 0
-
-        # Check if entire line is same player
-        first = board.get_flat(line[0])
-        if first != Player.EMPTY:
-            all_same = all(board.get_flat(i) == first for i in line)
-            if all_same:
-                if first == Player.X:
-                    x_count = len(line)
-                else:
-                    o_count = len(line)
-
-        x_max = max(x_max, x_count)
-        o_max = max(o_max, o_count)
-
-    # 4-beats-3 rule: Check win BEFORE loss.
-    # If a move creates both 4-in-a-row and 3-in-a-row, the 4 wins.
-    if x_max >= WIN_LENGTH:
-        return GameResult.X_WINS
-    if o_max >= WIN_LENGTH:
-        return GameResult.O_WINS
-
-    # Check for exactly 3 (loss) - only if no win
-    if x_max == LOSE_LENGTH:
-        return GameResult.O_WINS  # X loses = O wins
-    if o_max == LOSE_LENGTH:
-        return GameResult.X_WINS  # O loses = X wins
-
-    # Check for draw (full board)
+    # In the points variant, the game only ends when the board is full.
     if board.is_full():
         return GameResult.DRAW
 
@@ -270,59 +313,9 @@ def check_result(board: Board) -> GameResult:
 
 def check_result_fast(board: Board, last_move: int) -> GameResult:
     """
-    Optimized result check - only examines lines containing last_move.
-    Use this after making a move for better performance.
+    Optimized result check.
+    In the points variant, only the board occupancy matters for termination.
     """
-    last_player = Player.X if board.move_count() % 2 == 1 else Player.O
-    last_row = last_move // BOARD_SIZE
-    last_col = last_move % BOARD_SIZE
-
-    max_consecutive = 0
-
-    # Check all 4 directions from the last move
-    directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
-
-    for d_row, d_col in directions:
-        count = 1  # Count the piece itself
-
-        # Count in positive direction
-        r, c = last_row + d_row, last_col + d_col
-        while 0 <= r < BOARD_SIZE and 0 <= c < BOARD_SIZE:
-            if board.get(r, c) == last_player:
-                count += 1
-                r += d_row
-                c += d_col
-            else:
-                break
-
-        # Count in negative direction
-        r, c = last_row - d_row, last_col - d_col
-        while 0 <= r < BOARD_SIZE and 0 <= c < BOARD_SIZE:
-            if board.get(r, c) == last_player:
-                count += 1
-                r -= d_row
-                c -= d_col
-            else:
-                break
-
-        max_consecutive = max(max_consecutive, count)
-
-    # 4-beats-3 rule: Check win BEFORE loss.
-    # If a move creates both 4-in-a-row and 3-in-a-row, the 4 wins.
-    if max_consecutive >= WIN_LENGTH:
-        if last_player == Player.X:
-            return GameResult.X_WINS
-        else:
-            return GameResult.O_WINS
-
-    # Check loss condition (exactly 3) - only if no win
-    if max_consecutive == LOSE_LENGTH:
-        if last_player == Player.X:
-            return GameResult.O_WINS
-        else:
-            return GameResult.X_WINS
-
-    # Check draw
     if board.is_full():
         return GameResult.DRAW
 
