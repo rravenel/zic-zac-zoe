@@ -553,19 +553,41 @@ function logTurnState(moveIndex: number, player: Player, points: number): void {
 
   console.log(`Scoreboard: X: ${state.playerXScore} - O: ${state.playerOScore}`);
 
-  // ASCII Board
-  let boardStr = "";
+  // ASCII Board with CSS colors
+  let formatStr = "";
+  const styles: string[] = [];
+
   for (let r = 0; r < BOARD_SIZE; r++) {
-    let rowStr = "";
     for (let c = 0; c < BOARD_SIZE; c++) {
-      const p = state.board[r * BOARD_SIZE + c];
-      if (p === Player.X) rowStr += "X ";
-      else if (p === Player.O) rowStr += "O ";
-      else rowStr += "· ";
+      const idx = r * BOARD_SIZE + c;
+      const p = state.board[idx];
+      const isLastMove = idx === moveIndex;
+
+      let char = " · ";
+      let style = "font-family: monospace; font-size: 14px; ";
+
+      if (p === Player.X) char = " X ";
+      else if (p === Player.O) char = " O ";
+
+      if (isLastMove) {
+        // Highlight last move with player's color as background
+        style += player === Player.X 
+          ? "background: #00ffff; color: #000; font-weight: bold;" 
+          : "background: #ffff00; color: #000; font-weight: bold;";
+      } else {
+        // Normal piece colors
+        if (p === Player.X) style += "color: #00ffff;";
+        else if (p === Player.O) style += "color: #ffff00;";
+        else style += "color: #444444;";
+      }
+
+      formatStr += "%c" + char;
+      styles.push(style);
     }
-    boardStr += rowStr.trim() + "\n";
+    formatStr += "\n";
   }
-  console.log(boardStr);
+
+  console.log(formatStr, ...styles);
   console.groupEnd();
 }
 
