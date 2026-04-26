@@ -20,7 +20,7 @@ import {
   calculateMoveScore,
 } from "./game";
 import { loadModel, getAIMove, Difficulty } from "./ai";
-import { getRulesMove, isRulesAI, detectCheckmate, CheckmateResult } from "./rules-ai";
+import { getRulesMove, isRulesAI } from "./rules-ai";
 
 // Timing constants (milliseconds)
 const AI_MOVE_DELAY = 500;      // Delay after human move before AI responds
@@ -38,7 +38,6 @@ interface GameState {
   gameOver: boolean;
   lastMove: number | null;
   result: GameCheckResult | null;
-  checkmate: CheckmateResult | null;
   playerXScore: number;
   playerOScore: number;
 }
@@ -51,7 +50,6 @@ const state: GameState = {
   gameOver: false,
   lastMove: null,
   result: null,
-  checkmate: null,
   playerXScore: 0,
   playerOScore: 0,
 };
@@ -350,7 +348,6 @@ function newGame(): void {
   state.gameOver = false;
   state.lastMove = null;
   state.result = null;
-  state.checkmate = null;
   state.playerXScore = 0;
   state.playerOScore = 0;
 
