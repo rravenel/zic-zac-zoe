@@ -2,10 +2,19 @@ always use .venv when appropriate (like running python)
 
 ## Git & Workflow
 - **Commit & Push:** All work must be committed and pushed to the remote repository.
-- **Feature Branch Workflow:** This is a solo project. We are working directly in a feature branch; do not submit a PR for every task.
-- **Commit Granularity:** Commits must contain work for a single task only. The commit message MUST explicitly indicate which task is being addressed (e.g., "Task 1.1: Implement scoring engine").
-- **Progress Tracking:** Always read `PROGRESS.md` and follow the maintenance instructions there to ensure the project state is accurately reflected. Whenever a task is marked as ✅ **Completed** or ❌ **Blocked**, the corresponding work must be committed to git and pushed.
-- **Incomplete Work:** If a task cannot be completed in one go, the partial work must be preserved (e.g., as a draft or WIP commit) and must not interfere with the functionality of the rest of the project.
+- **Feature Branch Workflow:** This is a solo project. We are working directly in a feature branch.
+
+### Initial Build Procedure
+- **Context:** Applies when tasks in `TASKS.md` are defined and ongoing.
+- **Commit Granularity:** Commits must contain work for a single task only.
+- **Commit Messages:** MUST explicitly indicate the Task ID (e.g., "Task 1.1: Implement scoring engine").
+- **Tracking:** Maintain `PROGRESS.md` and specification files for every change. Whenever a task is marked as ✅ **Completed** or ❌ **Blocked**, the corresponding work must be committed to git and pushed.
+
+### Maintenance & Debugging Procedure
+- **Context:** Applies once initial tasks are complete, or for surgical bug fixes and iterative tweaks.
+- **Commit Messages:** Do NOT use Task IDs. Use descriptive comments explaining the bug identified and the fix applied, or the clear intent of the feature refinement.
+- **Tracking:** Documentation and progress updates are not required for minor iterative improvements or bug fixes.
+- **Incomplete Work:** If a task or fix cannot be completed in one go, the partial work must be preserved (e.g., as a draft or WIP commit) and must not interfere with the functionality of the rest of the project.
 
 ## Coding Standards
 - **Style & Best Practices:** Adhere to established coding styles and industry best practices.
