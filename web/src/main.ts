@@ -127,13 +127,17 @@ function clearStatsBlinking(): void {
   document.getElementById("stats-lost")?.classList.remove("blinking");
 }
 
-function recordGameResult(result: GameResult, humanPlayer: Player): void {
-  // Don't track ties - just win/loss
-  if (result === GameResult.Draw) {
-    return;
+function recordGameResult(_result: GameResult, humanPlayer: Player): void {
+  // Compare scores to determine winner
+  if (state.playerXScore === state.playerOScore) {
+    return; // Tie - no change to stats
   }
-  const winner = result === GameResult.XWins ? Player.X : Player.O;
-  const humanWon = winner === humanPlayer;
+
+  const humanScore = humanPlayer === Player.X ? state.playerXScore : state.playerOScore;
+  const aiScore = humanPlayer === Player.X ? state.playerOScore : state.playerXScore;
+  
+  const humanWon = humanScore > aiScore;
+  
   if (humanWon) {
     stats.won++;
   } else {
@@ -147,12 +151,14 @@ function recordGameResult(result: GameResult, humanPlayer: Player): void {
   document.getElementById(elementId)?.classList.add("blinking");
 }
 
-function recordTwoPlayerResult(result: GameResult): void {
-  // Don't track ties
-  if (result === GameResult.Draw) {
-    return;
+function recordTwoPlayerResult(_result: GameResult): void {
+  // Compare scores to determine winner
+  if (state.playerXScore === state.playerOScore) {
+    return; // Tie
   }
-  const winner = result === GameResult.XWins ? Player.X : Player.O;
+
+  const winner = state.playerXScore > state.playerOScore ? Player.X : Player.O;
+  
   if (winner === Player.X) {
     twoPlayerStats.x++;
   } else {
@@ -267,32 +273,23 @@ function updateScoreboardDisplay(): void {
 function updateStatus(): void {
   statusEl.classList.remove("your-turn", "x-turn", "o-turn", "win", "lose", "draw", "x-wins", "o-wins", "hidden");
 
-  if (state.gameOver && state.result) {
-    const { result } = state.result;
-
-    if (result === GameResult.Draw) {
+  if (state.gameOver) {
+    // Determine winner based on scores
+    if (state.playerXScore === state.playerOScore) {
       statusEl.textContent = "TIE GAME";
       statusEl.classList.add("draw");
     } else {
-      // Determine winner
-      const winner = result === GameResult.XWins ? Player.X : Player.O;
+      const winner = state.playerXScore > state.playerOScore ? Player.X : Player.O;
 
       if (isTwoPlayerMode()) {
         // 2-player mode: show "X WINS!!" or "O WINS!!" in winner's color
         const winClass = winner === Player.X ? "x-wins" : "o-wins";
-        if (state.checkmate?.isCheckmate) {
-          statusEl.textContent = "CHECKMATE!!";
-        } else {
-          statusEl.textContent = winner === Player.X ? "X WINS!!" : "O WINS!!";
-        }
+        statusEl.textContent = winner === Player.X ? "X WINS!!" : "O WINS!!";
         statusEl.classList.add(winClass);
       } else {
         // VS AI mode: show win/lose from human's perspective
         const humanWins = winner === state.humanPlayer;
-        if (state.checkmate?.isCheckmate) {
-          statusEl.textContent = "CHECKMATE!!";
-          statusEl.classList.add(humanWins ? "win" : "lose");
-        } else if (humanWins) {
+        if (humanWins) {
           statusEl.textContent = "YOU WIN!!";
           statusEl.classList.add("win");
         } else {
