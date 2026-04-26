@@ -15,7 +15,7 @@
 | Task 1.3 | Update `Board` class (score support) | ✅ Completed |
 | Task 1.4 | Scoring Unit Tests (Python) | 🏗️ In Progress |
 | Task 1.5 | Update `test_game.py` (cleanup & scores) | 🌑 Pending |
-| Task 1.6 | Audit other Python tests | 🌑 Pending |
+| Task 1.6 | Audit `test_tactical.py` (cleanup) | 🌑 Pending |
 | **Phase 2: Web Logic** | | |
 | Task 2.1 | Implement `calculateMoveScore` (TS parity) | 🌑 Pending |
 | Task 2.2 | Update `checkResult` / `checkResultFast` | 🌑 Pending |

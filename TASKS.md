@@ -11,12 +11,11 @@
 - [ ] **Task 1.3:** Update `Board` class in `game.py`.
   - Add `score_x` and `score_o` to initialization and copies.
   - **CRITICAL:** Update `hash()` and `__eq__` to include scores so identical boards with different scores are distinct states.
-- [ ] **Task 1.4:** Add unit tests in `test_scoring_logic.py` verifying all `FEATURE_SPEC` examples.
-- [ ] **Task 1.5:** **[NEW]** Update `test_game.py`.
-  - Remove tests for early win/loss (Connect-4 and Connect-3).
+- [ ] **Task 1.4:** Add unit tests in `test_scoring_logic.py` verifying all `FEATURE_SPEC` examples (The "Golden Set").
+- [ ] **Task 1.5:** Update `test_game.py`.
   - Add tests for score-based state identity and accumulation.
-- [ ] **Task 1.6:** **[NEW]** Audit and clean up other Python tests (`test_tactical.py`, `test_train.py`).
-  - Remove stale tactical assertions.
+- [ ] **Task 1.6:** Audit and clean up `test_tactical.py`.
+  - Remove stale tactical assertions that rely on early termination.
 
 ## Phase 2: Web Logic (TypeScript)
 - [ ] **Task 2.1:** Implement `calculateMoveScore` in `web/src/game.ts` (1:1 Port of Python).

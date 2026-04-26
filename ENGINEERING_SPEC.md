@@ -12,9 +12,9 @@ This document outlines the technical implementation details for transitioning Zi
   - **Lone Tile:** If N=0 (no neighbors), the move scores exactly **1 point**.
 - **End State:** Modify `check_result` to return terminal only when `board.is_full()`. Winner is determined by final score comparison.
 - **Testing:**
-  - Create `test_scoring_logic.py` and `web/src/test-scoring.ts` to verify new scoring rules.
-  - Update `test_game.py` to reflect the new termination logic (removal of early wins/losses).
-  - Remove any "Win/Loss" specific tactical tests that are no longer applicable (e.g., specific checkmate patterns if they no longer end the game).
+  - Create `test_scoring_logic.py` and `web/src/test-scoring.ts` using a **Shared Golden Set** of test cases (including lone-tile, bridges, and multi-line intersections) to ensure 1:1 parity between engines.
+  - Update `test_game.py` to reflect the fixed 36-move episode length and point-based terminal rewards.
+  - Remove any "Win/Loss" specific tactical tests that are no longer applicable (e.g., specific checkmate patterns).
 
 ## 2. State Management & Stats
 - **Frontend State (`web/src/main.ts`):** 
@@ -24,7 +24,7 @@ This document outlines the technical implementation details for transitioning Zi
   - Update `Board` class to support score accumulation.
 - **Testing:**
   - Update unit tests for `Board` (in `test_game.py`) to verify `score_x` and `score_o` are correctly tracked, copied, and included in hash/equality.
-  - Verify stats update logic in the frontend with new point-based win conditions.
+  - Verify stats update logic in the frontend, specifically asserting that a tie (equal scores) correctly results in no change to won/lost counters.
 
 ## 3. UI and Rendering (`web/src/main.ts`)
 - **Header Refactor:** Replace existing rules container with the single-line scoreboard.
@@ -40,8 +40,8 @@ This document outlines the technical implementation details for transitioning Zi
 - **MCTS Update:** Ensure the search tree can handle the full-board depth. Limit search time/depth to keep AI moves responsive (~500ms).
 - **Inference:** The model will continue to output move probabilities; the game controller will simply apply those moves regardless of the model's "value" estimation of the board.
 - **Testing:**
-  - Update `web/src/test-checkmate.ts` (or equivalent) to verify AI makes legal moves and attempts to maximize score (using the new heuristic if implemented).
-  - Remove tests specifically asserting early AI wins/losses via Connect-4.
+  - Update AI tests (`web/src/test-checkmate.ts` and `test_tactical.py`) to verify legal move selection and score-maximization behavior.
+  - Remove assertions in all AI test suites that expect early termination via Connect-4 or Connect-3.
 
 ## General Testing Mandates
 - **Fidelity:** All new logic must have corresponding tests.
