@@ -241,11 +241,18 @@ def calculate_move_score(board: 'Board', move_index: int, player: Player) -> int
 
             line_scores.append(base)
 
-    n = len(line_scores)
-    if n == 0:
-        return 1  # Lone tile rule
+    # Multiplier N: count of axes that actually scored points (> 0)
+    # This prevents lines of length 3 from contributing to the multiplier.
+    n_productive = sum(1 for s in line_scores if s > 0)
 
-    return sum(line_scores) * n
+    if n_productive == 0:
+        # Check if this was a Lone Tile or a Trap
+        if len(line_scores) == 0:
+            return 1  # Lone tile rule (no neighbors)
+        else:
+            return 0  # The Trap (all neighbors were lines of 3)
+
+    return sum(line_scores) * n_productive
 
 
 # =============================================================================

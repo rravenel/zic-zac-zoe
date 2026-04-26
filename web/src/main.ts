@@ -413,6 +413,10 @@ function makeHumanMove(index: number): void {
   updateStatus();
   updateScoreboardDisplay();
 
+  if (import.meta.env.DEV) {
+    logTurnState(index, currentPlayer, moveScore);
+  }
+
   if (state.gameOver) return;
 
   // In vs AI mode, trigger AI's turn
@@ -457,6 +461,10 @@ async function makeAIMove(): Promise<void> {
   renderBoard();
   updateStatus();
   updateScoreboardDisplay();
+
+  if (import.meta.env.DEV) {
+    logTurnState(move, currentPlayer, moveScore);
+  }
 }
 
 // =============================================================================
@@ -526,6 +534,42 @@ function updateScale(): void {
 }
 
 // =============================================================================
+// Debugging & Logging (Development Only)
+// =============================================================================
+
+/**
+ * Log the current turn state to the console
+ */
+function logTurnState(moveIndex: number, player: Player, points: number): void {
+  const moveCount = state.board.filter((c) => c !== Player.Empty).length;
+  const [row, col] = [Math.floor(moveIndex / BOARD_SIZE), moveIndex % BOARD_SIZE];
+  const playerName = player === Player.X ? "X" : "O";
+  const playerColor = player === Player.X ? "color: #00ffff" : "color: #ffff00";
+
+  console.groupCollapsed(
+    `%cTurn ${moveCount}: ${playerName} played at [${row}, ${col}] (+${points} pts)`,
+    playerColor + "; font-weight: bold"
+  );
+
+  console.log(`Scoreboard: X: ${state.playerXScore} - O: ${state.playerOScore}`);
+
+  // ASCII Board
+  let boardStr = "";
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    let rowStr = "";
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      const p = state.board[r * BOARD_SIZE + c];
+      if (p === Player.X) rowStr += "X ";
+      else if (p === Player.O) rowStr += "O ";
+      else rowStr += "· ";
+    }
+    boardStr += rowStr.trim() + "\n";
+  }
+  console.log(boardStr);
+  console.groupEnd();
+}
+
+// =============================================================================
 // Validation (Development Only)
 // =============================================================================
 
@@ -543,6 +587,7 @@ function validateScoringParity(): void {
     { existing: [1, 2, 4, 5], move: 3, expected: 10, desc: "Bridge to 5 (2_2)" },
     { existing: [0, 2, 3, 4, 5], move: 1, expected: 12, desc: "Bridge to 6 (1_4)" },
     { existing: [0, 1, 3, 8], move: 2, expected: 20, desc: "T-Bone (8+2)*2" },
+    { existing: [0, 1, 3, 8, 14], move: 2, expected: 8, desc: "Productive Multiplier (8+0)*1" },
     { existing: [6, 8, 1, 13, 0, 14, 2, 12], move: 7, expected: 0, desc: "3x3 Death Trap" },
   ];
 

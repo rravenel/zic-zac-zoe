@@ -226,13 +226,21 @@ export function calculateMoveScore(
     }
   }
 
-  const n = lineScores.length;
-  if (n === 0) {
-    return 1; // Lone tile rule
+  // Multiplier N: count of axes that actually scored points (> 0)
+  // This prevents lines of length 3 from contributing to the multiplier.
+  const nProductive = lineScores.filter((s) => s > 0).length;
+
+  if (nProductive === 0) {
+    // Check if this was a Lone Tile or a Trap
+    if (lineScores.length === 0) {
+      return 1; // Lone tile rule (no neighbors)
+    } else {
+      return 0; // The Trap (all neighbors were lines of 3)
+    }
   }
 
   const sum = lineScores.reduce((a, b) => a + b, 0);
-  return sum * n;
+  return sum * nProductive;
 }
 
 /**

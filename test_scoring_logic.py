@@ -26,6 +26,16 @@ def test_scoring_examples():
         # Vertical: X _ (Indices _, 8) -> Append to 2 (2 pts)
         # Intersection at index 2 (row 0, col 2)
         ([0, 1, 3, 8], 2, 20, "T-Bone (8+2)*2"),
+        
+        # Productive Multiplier Rule: 4-in-a-row + 3-in-a-row
+        # Horiz: XX _ X (Indices 0, 1, _, 3) -> Bridge to 4 (8 pts)
+        # Vert: XX _ (Indices 8, 14) -> Append to 3 (0 pts)
+        # Multiplier should be 1 (only the horizontal line scored points)
+        # Expected: (8 + 0) * 1 = 8
+        # Wait, if Horizontal is Bridge-to-4 (8 pts) and Vertical is Append-to-3 (0 pts).
+        # Old logic: (8 + 0) * 2 = 16
+        # New logic: (8 + 0) * 1 = 8
+        ([0, 1, 3, 8, 14], 2, 8, "Productive Multiplier (8+0)*1"),
     ]
     
     for existing, move, expected, desc in test_cases:
