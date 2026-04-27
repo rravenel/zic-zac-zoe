@@ -15,11 +15,13 @@ The project has evolved from a board-filling strategic game to a resource-manage
   - **Board Full:** Automatic claim and termination if the last cell is filled.
 
 ### 2. AI Architecture
-- **State:** The Neural Network for move selection is active, but the tactical rules are secondary.
-- **Decision Engine:** The AI uses a probabilistic model to decide whether to Claim or Pass based on points:
-  - `Points <= 1`: 10% claim chance.
-  - `Points >= 50`: 99% claim chance.
-  - `Intermediate`: Linear probability scaling.
+- **State:** The Tactical Heuristic engine is active, providing high-engagement gameplay.
+- **Search Logic:** Proximity-based search (8-neighbors) evaluates potential points for both players.
+- **Threshold Rule:** AI ignores moves involving fewer than 4 tokens (encouraging board growth).
+- **Decision Engine (Move):** Heuristic chooses highest value between self-score and human-block; prioritizes blocking humans on ties.
+- **Decision Engine (Action):** 
+  - **Block Intent:** Always PASS (preserves blocking token).
+  - **Build Intent:** Probabilistic Claim (10% to 99% based on points).
 
 ### 3. UI & Visual Feedback
 - **Decision UI:** The status bar prompts "CLAIM OR PASS?" while the action buttons blink to signal a required choice.

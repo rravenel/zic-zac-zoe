@@ -47,7 +47,8 @@ Browser-based game with retro 80s arcade styling.
 ### Features
 
 - **Strategic Decision Phase**: Choose to CLAIM or PASS after every move.
-- **Probabilistic AI**: Plays against a non-deterministic AI that makes rational point-claiming decisions.
+- **Tactical Heuristic AI**: Features an intelligent search engine that identifies high-value intersections and defensive blocks.
+- **Intent-Based Strategy**: AI prioritizes blocking player setups and strategically passes on blocks to maintain board control.
 - **Live Scoreboard**: Anchored to the board for clear tracking of points and remaining moves.
 - **Visual Polish**: Retro animations including token "evaporation" and blinking action cues.
 - **Developer Logs**: Verbose turn-by-turn breakdown in the browser console.
