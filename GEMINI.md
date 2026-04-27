@@ -12,6 +12,15 @@ always use .venv when appropriate (like running python)
 - **Commit Messages:** MUST explicitly indicate the Task ID (e.g., "Task 1.1: Implement scoring engine").
 - **Tracking:** Maintain `PROGRESS.md` and specification files for every change. Whenever a task is marked as ✅ **Completed** or ❌ **Blocked**, the corresponding work must be committed to git and pushed.
 
+### Active Feature Development
+- **Workflow:** For non-trivial features or refactors, use `CURRENT_TASK.md` to define the scope.
+- **Protocol:**
+  1. **Draft Spec:** Outline the architectural change and function signatures.
+  2. **Sub-tasks:** Break the work into atomic units (e.g., Logic Refactor vs. UI Integration).
+  3. **Atomic Commits:** Each sub-task should typically correspond to a single commit.
+  4. **State Tracking:** Update the "Status" and "Tasks" sections in `CURRENT_TASK.md` as work progresses.
+- **Completion:** Once all sub-tasks are ✅ **Completed**, the feature is considered delivered and `CURRENT_TASK.md` may be cleared or archived.
+
 ### Maintenance & Debugging Procedure
 - **Context:** Applies once initial tasks are complete, or for surgical bug fixes and iterative tweaks.
 - **Commit Messages:** Do NOT use Task IDs. Use descriptive comments explaining the bug identified and the fix applied, or the clear intent of the feature refinement.
