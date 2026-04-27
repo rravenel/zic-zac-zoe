@@ -1,7 +1,7 @@
 # Current Task: Points-Award Cell Highlighting
 
 ## Status
-- **State:** 2/3 Complete
+- **State:** ✅ Complete
 - **Last Updated:** 2026-04-26
 
 ## Tasks
@@ -17,8 +17,8 @@
   - Implement rendering and CSS for `.scoring-highlight`.
   - Verify persistence through final game state.
 - **Sub-Task 3: QA**
-  - **Status:** pending
-  - Final verification of feature behavior in browser.
+  - **Status:** complete
+  - Final verification of feature behavior in browser, including persistent scoring highlights and latest move blinks.
 
 ---
 
