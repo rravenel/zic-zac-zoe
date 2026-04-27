@@ -221,12 +221,15 @@ function recordTwoPlayerResult(_result: GameResult): void {
 const boardEl = document.getElementById("board")!;
 const statusEl = document.getElementById("status")!;
 const loadingEl = document.getElementById("loading")!;
-const btnMode = document.getElementById("btn-mode")!;
-const btnPlayer = document.getElementById("btn-player")!;
-const btnDifficulty = document.getElementById("btn-difficulty")!;
+const modeDisplayEl = document.getElementById("mode-display")!;
+const configErrorEl = document.getElementById("config-error")!;
+const btnClaim = document.getElementById("btn-claim")! as HTMLButtonElement;
+const btnPass = document.getElementById("btn-pass")! as HTMLButtonElement;
 const btnNewGame = document.getElementById("btn-new-game")!;
 const scoreXEl = document.getElementById("score-x")!;
 const scoreOEl = document.getElementById("score-o")!;
+const movesXEl = document.getElementById("moves-x")!;
+const movesOEl = document.getElementById("moves-o")!;
 const lastPointsXEl = document.getElementById("last-points-x")!;
 const lastPointsOEl = document.getElementById("last-points-o")!;
 
@@ -331,6 +334,10 @@ function updateScoreboardDisplay(): void {
   scoreXEl.textContent = state.playerXScore.toString().padStart(5, " ");
   scoreOEl.textContent = state.playerOScore.toString().padStart(5, " ");
 
+  // Update moves remaining
+  movesXEl.textContent = `M: ${state.movesRemainingX.toString().padStart(2, "0")}`;
+  movesOEl.textContent = `M: ${state.movesRemainingO.toString().padStart(2, "0")}`;
+
   // Update last points indicators
   if (state.lastMoveScoreX !== null) {
     lastPointsXEl.textContent = `+${state.lastMoveScoreX}`;
@@ -394,16 +401,14 @@ const DIFFICULTY_NAMES: Record<Difficulty, string> = {
  * Update button visuals to reflect current state
  */
 function updateButtons(): void {
-  // Mode button - shows "1P" or "2P"
-  btnMode.textContent = state.twoPlayer ? "2P" : "1P";
+  // Claim/Pass buttons blink when awaiting decision
+  btnClaim.classList.toggle("blinking", state.awaitingDecision);
+  btnPass.classList.toggle("blinking", state.awaitingDecision);
 
-  // Player button - shows "X" or "O", disabled in 2-player mode
-  btnPlayer.textContent = state.humanPlayer === Player.X ? "X" : "O";
-  btnPlayer.classList.toggle("disabled", isTwoPlayerMode());
-
-  // Difficulty button - shows difficulty name, disabled in 2-player mode
-  btnDifficulty.textContent = DIFFICULTY_NAMES[state.difficulty];
-  btnDifficulty.classList.toggle("disabled", isTwoPlayerMode());
+  // Disable buttons if not awaiting decision or game over
+  const canAct = state.awaitingDecision && !state.gameOver;
+  btnClaim.disabled = !canAct;
+  btnPass.disabled = !canAct;
 }
 
 /**
@@ -699,35 +704,11 @@ async function makeAIMove(): Promise<void> {
 // =============================================================================
 
 function setupEventListeners(): void {
-  // Mode selection - toggles between 1-player and 2-player
-  btnMode.addEventListener("click", () => {
-    state.twoPlayer = !state.twoPlayer;
-    // Reset 2-player stats when entering 2-player mode
-    if (state.twoPlayer) {
-      twoPlayerStats = { x: 0, o: 0 };
-    }
-    updateButtons();
-    updateStatsDisplay();
-    newGame();
-  });
+  // Claim button
+  btnClaim.addEventListener("click", () => handleClaim());
 
-  // Player selection - toggles X/O (disabled in 2-player mode)
-  btnPlayer.addEventListener("click", () => {
-    if (isTwoPlayerMode()) return;
-    state.humanPlayer = state.humanPlayer === Player.X ? Player.O : Player.X;
-    updateButtons();
-    newGame();
-  });
-
-  // Difficulty selection - cycles through 1-4 stars (disabled in 2-player mode)
-  btnDifficulty.addEventListener("click", () => {
-    if (isTwoPlayerMode()) return;
-    const currentIndex = DIFFICULTY_LEVELS.indexOf(state.difficulty);
-    const nextIndex = (currentIndex + 1) % DIFFICULTY_LEVELS.length;
-    state.difficulty = DIFFICULTY_LEVELS[nextIndex];
-    updateButtons();
-    newGame();
-  });
+  // Pass button
+  btnPass.addEventListener("click", () => handlePass());
 
   // New game
   btnNewGame.addEventListener("click", () => {
@@ -879,18 +860,37 @@ async function loadConfig(): Promise<void> {
     const activeModes = config.modes.filter(m => m.active);
     
     if (activeModes.length !== 1) {
-      state.configError = "CONFIGURATION ERROR: Multiple or No Active Modes";
-      return;
+      state.configError = "CONFIGURATION ERROR:\nMultiple or No Active Modes";
+    } else {
+      const activeMode = activeModes[0];
+      state.activeModeId = activeMode.id;
+      state.modeSettings = activeMode.settings;
+      
+      // Update mode display in header
+      const modeNames: Record<string, string> = {
+        "point_cap": "Point Cap",
+        "move_cap": "Move Cap",
+        "point_lead": "Point Lead"
+      };
+      const modeName = modeNames[state.activeModeId] || state.activeModeId;
+      const targetVal = state.modeSettings.target || state.modeSettings.limit_per_side || state.modeSettings.margin;
+      modeDisplayEl.textContent = `Mode: ${modeName} (${targetVal})`;
+      
+      console.log(`Active Mode: ${state.activeModeId}`, state.modeSettings);
     }
-    
-    const activeMode = activeModes[0];
-    state.activeModeId = activeMode.id;
-    state.modeSettings = activeMode.settings;
-    
-    console.log(`Active Mode: ${state.activeModeId}`, state.modeSettings);
   } catch (error) {
     console.error("Config loading error:", error);
-    state.configError = "CONFIGURATION ERROR: Failed to load config file";
+    state.configError = "CONFIGURATION ERROR:\nFailed to load config file";
+  }
+
+  // Handle error display
+  if (state.configError) {
+    configErrorEl.classList.remove("hidden");
+    configErrorEl.querySelector(".error-message")!.textContent = state.configError;
+    boardEl.classList.add("hidden");
+  } else {
+    configErrorEl.classList.add("hidden");
+    boardEl.classList.remove("hidden");
   }
 }
 
