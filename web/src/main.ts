@@ -22,7 +22,7 @@ import {
   getScoringData,
   ScoringData,
 } from "./game";
-import { loadModel, getAIMove, Difficulty } from "./ai";
+import { loadModel, getAIMove, Difficulty, getAIDecision } from "./ai";
 import { getRulesMove, isRulesAI } from "./rules-ai";
 
 // Timing constants (milliseconds)
@@ -444,19 +444,21 @@ async function handleClaim(skipClear: boolean = false): Promise<void> {
   if (!state.awaitingDecision || state.pendingMove === null) return;
 
   const currentPlayer = getCurrentPlayer(state.board);
-  const scoringData = getScoringData(state.board, state.pendingMove, currentPlayer);
+  const moveIdx = state.pendingMove;
+  const scoringData = getScoringData(state.board, moveIdx, currentPlayer);
+  const points = scoringData.totalScore;
 
   // Update scores and highlights
   if (currentPlayer === Player.X) {
-    state.playerXScore += scoringData.totalScore;
-    state.lastMoveScoreX = scoringData.totalScore;
+    state.playerXScore += points;
+    state.lastMoveScoreX = points;
     state.scoringHighlightsX = scoringData.involvedCells;
-    state.lastMoveX = state.pendingMove;
+    state.lastMoveX = moveIdx;
   } else {
-    state.playerOScore += scoringData.totalScore;
-    state.lastMoveScoreO = scoringData.totalScore;
+    state.playerOScore += points;
+    state.lastMoveScoreO = points;
     state.scoringHighlightsO = scoringData.involvedCells;
-    state.lastMoveO = state.pendingMove;
+    state.lastMoveO = moveIdx;
   }
 
   if (!skipClear) {
@@ -481,6 +483,10 @@ async function handleClaim(skipClear: boolean = false): Promise<void> {
   state.awaitingDecision = false;
   state.pendingMove = null;
 
+  if (import.meta.env.DEV) {
+    logTurnState(moveIdx, currentPlayer, points, "claim");
+  }
+
   renderBoard();
   endTurn();
 }
@@ -492,6 +498,7 @@ function handlePass(): void {
   if (!state.awaitingDecision || state.pendingMove === null) return;
 
   const currentPlayer = getCurrentPlayer(state.board);
+  const moveIdx = state.pendingMove;
 
   // Record +0 for the turn
   if (currentPlayer === Player.X) {
@@ -507,6 +514,10 @@ function handlePass(): void {
   // Finalize
   state.awaitingDecision = false;
   state.pendingMove = null;
+
+  if (import.meta.env.DEV) {
+    logTurnState(moveIdx, currentPlayer, 0, "pass");
+  }
 
   renderBoard();
   endTurn();
@@ -693,9 +704,17 @@ async function makeAIMove(): Promise<void> {
   if (state.board.every(cell => cell !== Player.Empty)) {
     handleClaim(true);
   } else {
-    // Temporary: AI always claims after a short delay
-    // Task 4.1 will implement probabilistic decision logic
-    setTimeout(() => handleClaim(), AI_MOVE_DELAY);
+    // AI probabilistic decision
+    const scoringData = getScoringData(state.board, move, currentPlayer);
+    const decision = getAIDecision(scoringData.totalScore);
+    
+    setTimeout(() => {
+      if (decision === "claim") {
+        handleClaim();
+      } else {
+        handlePass();
+      }
+    }, AI_MOVE_DELAY);
   }
 }
 
@@ -748,18 +767,19 @@ function updateScale(): void {
 /**
  * Log the current turn state to the console
  */
-function logTurnState(moveIndex: number, player: Player, points: number): void {
+function logTurnState(moveIndex: number, player: Player, points: number, decision: "claim" | "pass"): void {
   const moveCount = state.board.filter((c) => c !== Player.Empty).length;
   const [row, col] = [Math.floor(moveIndex / BOARD_SIZE), moveIndex % BOARD_SIZE];
   const playerName = player === Player.X ? "X" : "O";
   const playerColor = player === Player.X ? "color: #00ffff" : "color: #ffff00";
 
   console.groupCollapsed(
-    `%cTurn ${moveCount}: ${playerName} played at [${row}, ${col}] (+${points} pts)`,
+    `%cTurn ${moveCount}: ${playerName} played [${row}, ${col}] - ${decision.toUpperCase()} (+${points} pts)`,
     playerColor + "; font-weight: bold"
   );
 
-  console.log(`Scoreboard: X: ${state.playerXScore} - O: ${state.playerOScore}`);
+  console.log(`Moves: X: ${state.movesRemainingX} | O: ${state.movesRemainingO}`);
+  console.log(`Score: X: ${state.playerXScore} | O: ${state.playerOScore}`);
 
   // ASCII Board with CSS colors
   let formatStr = "";
