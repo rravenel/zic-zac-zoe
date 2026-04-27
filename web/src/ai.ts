@@ -606,13 +606,19 @@ export function getAIDecision(points: number): "claim" | "pass" {
   let probability: number;
 
   if (points <= 1) {
-    probability = 0.2;
+    probability = 0.1; // 10% chance for 0 or 1 point
   } else if (points >= 50) {
     probability = 0.99;
   } else {
-    // Linear interpolation between 1 and 50 points (0.2 to 0.99)
-    probability = 0.2 + 0.79 * ((points - 1) / 49);
+    // Linear interpolation between 1 and 50 points (0.1 to 0.99)
+    probability = 0.10 + 0.89 * ((points - 1) / 49);
   }
 
-  return Math.random() < probability ? "claim" : "pass";
+  const decision = Math.random() < probability ? "claim" : "pass";
+
+  if (import.meta.env.DEV) {
+    console.log(`[AI Decision] Points: ${points}, Prob: ${(probability * 100).toFixed(1)}%, Decision: ${decision.toUpperCase()}`);
+  }
+
+  return decision;
 }
