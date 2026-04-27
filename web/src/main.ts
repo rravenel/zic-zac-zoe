@@ -446,8 +446,11 @@ function newGame(): void {
  * Handle cell click
  */
 function handleCellClick(index: number): void {
-  // Ignore if game over
-  if (state.gameOver) return;
+  // Ignore if game over or config error
+  if (state.gameOver || state.configError) return;
+
+  // Ignore if awaiting decision
+  if (state.awaitingDecision) return;
 
   // In 2-player mode, either player can go; in vs AI mode, only human's turn
   const currentPlayer = getCurrentPlayer(state.board);
@@ -456,70 +459,23 @@ function handleCellClick(index: number): void {
   // Ignore if cell is occupied
   if (state.board[index] !== Player.Empty) return;
 
-  // Make the move
-  makeHumanMove(index);
-}
-
-/**
- * Update the scoring highlights for the most recent move.
- */
-function updateHighlights(index: number, player: Player): void {
-  const indices = getScoringIndices(state.board, index, player);
-  if (player === Player.X) {
-    state.lastMoveX = index;
-    state.scoringHighlightsX = indices;
-  } else {
-    state.lastMoveO = index;
-    state.scoringHighlightsO = indices;
-  }
-}
-
-/**
- * Make a human move (handles both vs AI and 2-player modes)
- */
-function makeHumanMove(index: number): void {
-  const currentPlayer = getCurrentPlayer(state.board);
-  
-  // Calculate score BEFORE making the move
-  const moveScore = calculateMoveScore(state.board, index, currentPlayer);
-  if (currentPlayer === Player.X) {
-    state.playerXScore += moveScore;
-    state.lastMoveScoreX = moveScore;
-  } else {
-    state.playerOScore += moveScore;
-    state.lastMoveScoreO = moveScore;
-  }
-
-  state.board = makeMove(state.board, index);
+  // Place token (does NOT finalize turn)
+  state.board[index] = currentPlayer;
   state.lastMove = index;
-  updateHighlights(index, currentPlayer);
+  state.pendingMove = index;
+  state.awaitingDecision = true;
 
-  // Check for game end
-  const result = checkResultFast(state.board, index);
-  if (result.result !== GameResult.Ongoing) {
-    state.gameOver = true;
-    state.result = result;
-    if (isTwoPlayerMode()) {
-      recordTwoPlayerResult(result.result);
-    } else {
-      recordGameResult(result.result, state.humanPlayer);
-    }
+  // Decrement moves
+  if (currentPlayer === Player.X) {
+    state.movesRemainingX--;
+  } else {
+    state.movesRemainingO--;
   }
 
   renderBoard();
   updateStatus();
+  updateButtons();
   updateScoreboardDisplay();
-
-  if (import.meta.env.DEV) {
-    logTurnState(index, currentPlayer, moveScore);
-  }
-
-  if (state.gameOver) return;
-
-  // In vs AI mode, trigger AI's turn
-  if (!isTwoPlayerMode()) {
-    setTimeout(() => makeAIMove(), AI_MOVE_DELAY);
-  }
 }
 
 /**
