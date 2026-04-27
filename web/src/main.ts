@@ -363,7 +363,10 @@ function updateScoreboardDisplay(): void {
 function updateStatus(): void {
   statusEl.classList.remove("win", "lose", "draw", "x-wins", "o-wins", "game-over-visible", "x-turn", "o-turn");
 
-  if (state.awaitingDecision && state.pendingMove !== null) {
+  // Determine if it's a human's turn to decide
+  const isHumanDecision = state.awaitingDecision && (isTwoPlayerMode() || state.currentPlayer === state.humanPlayer);
+
+  if (isHumanDecision && state.pendingMove !== null) {
     statusEl.textContent = "CLAIM OR PASS?";
     statusEl.classList.add("game-over-visible");
     const currentPlayer = state.board[state.pendingMove];
