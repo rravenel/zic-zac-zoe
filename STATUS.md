@@ -22,6 +22,7 @@ The project has successfully transitioned from a "Connect N" win/loss game to a 
 ### 3. Visual Feedback
 - **Synchronized Blinking:** The most recent move for both X and O pulses in unison using a global CSS animation clock.
 - **Persistent Scoring Highlights:** All pieces involved in a move's point award are highlighted with a steady border until that player's next move.
+- **Per-Turn Point Indicators:** The scoreboard displays the specific points earned on the most recent move (`+N`) right-aligned under each player's cumulative score.
 - **Game Over Persistence:** The final move's scoring highlights remain visible through the "Game Over" state.
 
 ### 4. Developer Tools (Dev Mode Only)
