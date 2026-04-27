@@ -1,35 +1,36 @@
-# Project Status: Points Variant Prototype
+# Project Status: "Claim" Variant Prototype
 
 ## Current State
-The project has successfully transitioned from a "Connect N" win/loss game to a strategic **Points Variant**. A playable prototype is live in the `web/` directory.
+The project has evolved from a board-filling strategic game to a resource-management strategy called the **Claim Variant**. A fully playable prototype with configurable win conditions and a decision-making AI is live.
 
 ## Technical Context
-### 1. Active Game Variant: Points
+### 1. Active Game Variant: Claim
 - **Grid:** 6x6.
-- **Termination:** Full-board (36 moves).
-- **Scoring Engine:**
-  - $L=1$: 1 point.
-  - $L=3$: 0 points.
-  - Other lengths: $L$ points.
-  - **Bridge Bonus:** 2x points if a move connects two existing segments.
-  - **Productive Multiplier:** Total score is multiplied by $N$, where $N$ is the count of axes producing $>0$ points.
-- **Winner:** Determined by highest cumulative score at termination.
+- **New Mechanic:** After placing a token, players must choose to **Claim** points (which removes the contributing tokens from the board) or **Pass** (leaving tokens but scoring 0).
+- **Tactical Clearing:** $L=3$ segments award 0 points but can be claimed to clear board space.
+- **Winning Conditions (Configurable in `game_config.json`):**
+  - **Point Cap:** First to reach a target score (e.g., 200).
+  - **Move Cap:** Fixed moves per side (e.g., 50 each); highest score wins.
+  - **Point Lead:** Lead opponent by a margin (e.g., 25 points); backed by a move cap safety valve.
+  - **Board Full:** Automatic claim and termination if the last cell is filled.
 
 ### 2. AI Architecture
-- **State:** The Neural Network and Tactical Rule layers are currently **disconnected**.
-- **Behavior:** The AI selects purely random legal moves. This provides a neutral baseline for play-testing the scoring mechanics.
+- **State:** The Neural Network for move selection is active, but the tactical rules are secondary.
+- **Decision Engine:** The AI uses a probabilistic model to decide whether to Claim or Pass based on points:
+  - `Points <= 1`: 50% claim chance.
+  - `Points >= 50`: 99% claim chance.
+  - `Intermediate`: Linear probability scaling.
 
-### 3. Visual Feedback
-- **Synchronized Blinking:** The most recent move for both X and O pulses in unison using a global CSS animation clock.
-- **Persistent Scoring Highlights:** All pieces involved in a move's point award are highlighted with a steady border until that player's next move.
-- **Per-Turn Point Indicators:** The scoreboard displays the specific points earned on the most recent move (`+N`) right-aligned under each player's cumulative score.
-- **Game Over Persistence:** The final move's scoring highlights remain visible through the "Game Over" state.
+### 3. UI & Visual Feedback
+- **Decision UI:** The status bar prompts "CLAIM OR PASS?" while the action buttons blink to signal a required choice.
+- **Scoreboard:** Anchored to the game board; displays cumulative scores, per-turn point gains, and remaining moves (in applicable modes).
+- **Animations:** Tokens "evaporate" when claimed to signify resource consumption and board clearing.
+- **Persistent Highlights:** Scoring highlights remain on empty cells after a claim until the player's next move.
 
-### 4. Developer Tools (Dev Mode Only)
-- **Console Logger:** Verbose, color-coded turn snapshots in the browser console (Move #, Player, Points, ASCII board).
-- **Parity Check:** Automatic validation of the TypeScript scoring engine against the Python "Golden Set" on page load.
+### 4. Developer Tools
+- **Configuration:** `web/public/game_config.json` allows hot-swapping game modes and tuning constants.
+- **Validation:** Type-safe implementation with a clean `tsc` build.
 
 ## Handover Notes for Next Session
-- **Scoring Audit:** The "Productive Multiplier" logic was recently refined to ensure non-scoring lines (length 3) do not inflate the multiplier.
-- **Pending Tasks:** None. The initial build phase is 100% complete.
-- **Brainstorming:** See `BRAINSTORM.md` for proposed tactical algorithms for the next AI iteration.
+- **Next Phase:** Retraining the Neural Network to understand the risk/reward of passing vs. claiming.
+- **Brainstorming:** Current AI uses random move selection within the new decision framework; future versions should optimize for long-term board positioning.

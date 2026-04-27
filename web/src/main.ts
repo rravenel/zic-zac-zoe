@@ -12,18 +12,14 @@ import {
   GameResult,
   BOARD_SIZE,
   createBoard,
-  getCurrentPlayer,
-  makeMove,
-  checkResultFast,
+  getOpponent,
   getLegalMoves,
   GameCheckResult,
   calculateMoveScore,
-  getScoringIndices,
   getScoringData,
-  ScoringData,
 } from "./game";
-import { loadModel, getAIMove, Difficulty, getAIDecision } from "./ai";
-import { getRulesMove, isRulesAI } from "./rules-ai";
+import { loadModel, Difficulty, getAIDecision } from "./ai";
+import { isRulesAI } from "./rules-ai";
 
 // Timing constants (milliseconds)
 const AI_MOVE_DELAY = 500;      // Delay after human move before AI responds
@@ -64,6 +60,7 @@ interface GameState {
   scoringHighlightsX: number[];
   scoringHighlightsO: number[];
   // Claim Variant additions
+  currentPlayer: Player;
   pendingMove: number | null;
   awaitingDecision: boolean;
   movesRemainingX: number;
@@ -90,6 +87,7 @@ const state: GameState = {
   scoringHighlightsX: [],
   scoringHighlightsO: [],
   // Claim Variant defaults
+  currentPlayer: Player.X,
   pendingMove: null,
   awaitingDecision: false,
   movesRemainingX: 0,
@@ -233,9 +231,6 @@ const movesOEl = document.getElementById("moves-o")!;
 const lastPointsXEl = document.getElementById("last-points-x")!;
 const lastPointsOEl = document.getElementById("last-points-o")!;
 
-// Difficulty levels for cycling (1-4 stars)
-const DIFFICULTY_LEVELS: Difficulty[] = ["easy", "medium", "hard", "expert"];
-
 // =============================================================================
 // Rendering
 // =============================================================================
@@ -261,8 +256,7 @@ function renderBoard(): void {
   const cells = boardEl.querySelectorAll(".cell");
 
   // Update board's turn class for hover styling in 2P mode
-  const currentPlayer = getCurrentPlayer(state.board);
-  boardEl.classList.toggle("o-turn", isTwoPlayerMode() && currentPlayer === Player.O);
+  boardEl.classList.toggle("o-turn", isTwoPlayerMode() && state.currentPlayer === Player.O);
 
   cells.forEach((cell, i) => {
     const el = cell as HTMLElement;
@@ -282,7 +276,8 @@ function renderBoard(): void {
       "scoring-highlight-x",
       "scoring-highlight-o",
       "last-move-blink-x",
-      "last-move-blink-o"
+      "last-move-blink-o",
+      "evaporate"
     );
 
     // Set piece content
@@ -334,9 +329,17 @@ function updateScoreboardDisplay(): void {
   scoreXEl.textContent = state.playerXScore.toString().padStart(5, " ");
   scoreOEl.textContent = state.playerOScore.toString().padStart(5, " ");
 
-  // Update moves remaining
-  movesXEl.textContent = `M: ${state.movesRemainingX.toString().padStart(2, "0")}`;
-  movesOEl.textContent = `M: ${state.movesRemainingO.toString().padStart(2, "0")}`;
+  // Update moves remaining (only in Move Cap or Point Lead modes)
+  const showMoves = state.activeModeId === "move_cap" || state.activeModeId === "point_lead";
+  if (showMoves) {
+    movesXEl.textContent = state.movesRemainingX.toString().padStart(2, "0");
+    movesOEl.textContent = state.movesRemainingO.toString().padStart(2, "0");
+    movesXEl.style.visibility = "visible";
+    movesOEl.style.visibility = "visible";
+  } else {
+    movesXEl.style.visibility = "hidden";
+    movesOEl.style.visibility = "hidden";
+  }
 
   // Update last points indicators
   if (state.lastMoveScoreX !== null) {
@@ -358,7 +361,15 @@ function updateScoreboardDisplay(): void {
  * Update the status display
  */
 function updateStatus(): void {
-  statusEl.classList.remove("win", "lose", "draw", "x-wins", "o-wins", "game-over-visible");
+  statusEl.classList.remove("win", "lose", "draw", "x-wins", "o-wins", "game-over-visible", "x-turn", "o-turn");
+
+  if (state.awaitingDecision && state.pendingMove !== null) {
+    statusEl.textContent = "CLAIM OR PASS?";
+    statusEl.classList.add("game-over-visible");
+    const currentPlayer = state.board[state.pendingMove];
+    statusEl.classList.add(currentPlayer === Player.X ? "x-turn" : "o-turn");
+    return;
+  }
 
   if (state.gameOver) {
     statusEl.classList.add("game-over-visible");
@@ -389,14 +400,6 @@ function updateStatus(): void {
   }
 }
 
-// Difficulty level display names
-const DIFFICULTY_NAMES: Record<Difficulty, string> = {
-  easy: "EASY",
-  medium: "MED",
-  hard: "HARD",
-  expert: "XPRT",
-};
-
 /**
  * Update button visuals to reflect current state
  */
@@ -425,14 +428,15 @@ function endTurn(): void {
     return;
   }
 
-  // Switch player is handled by getCurrentPlayer(state.board)
+  // Switch player explicitly
+  state.currentPlayer = getOpponent(state.currentPlayer);
+
   updateStatus();
   updateButtons();
   updateScoreboardDisplay();
 
   // If now it's AI's turn, trigger it
-  const nextPlayer = getCurrentPlayer(state.board);
-  if (!isTwoPlayerMode() && nextPlayer !== state.humanPlayer) {
+  if (!isTwoPlayerMode() && state.currentPlayer !== state.humanPlayer) {
     setTimeout(() => makeAIMove(), AI_MOVE_DELAY);
   }
 }
@@ -443,7 +447,9 @@ function endTurn(): void {
 async function handleClaim(skipClear: boolean = false): Promise<void> {
   if (!state.awaitingDecision || state.pendingMove === null) return;
 
-  const currentPlayer = getCurrentPlayer(state.board);
+  const currentPlayer = state.board[state.pendingMove];
+  if (currentPlayer === Player.Empty) return;
+
   const moveIdx = state.pendingMove;
   const scoringData = getScoringData(state.board, moveIdx, currentPlayer);
   const points = scoringData.totalScore;
@@ -497,7 +503,9 @@ async function handleClaim(skipClear: boolean = false): Promise<void> {
 function handlePass(): void {
   if (!state.awaitingDecision || state.pendingMove === null) return;
 
-  const currentPlayer = getCurrentPlayer(state.board);
+  const currentPlayer = state.board[state.pendingMove];
+  if (currentPlayer === Player.Empty) return;
+
   const moveIdx = state.pendingMove;
 
   // Record +0 for the turn
@@ -530,7 +538,6 @@ function checkGameOver(): void {
   if (state.gameOver) return;
 
   const pointCap = state.modeSettings.target || 0;
-  const moveLimit = state.modeSettings.limit_per_side || 0;
   const leadMargin = state.modeSettings.margin || 0;
 
   // 1. Point Cap
@@ -611,6 +618,7 @@ function newGame(): void {
   state.scoringHighlightsO = [];
 
   // Claim Variant initialization
+  state.currentPlayer = Player.X;
   state.pendingMove = null;
   state.awaitingDecision = false;
   state.movesRemainingX = state.modeSettings.limit_per_side || 0;
@@ -638,13 +646,13 @@ function handleCellClick(index: number): void {
   if (state.awaitingDecision) return;
 
   // In 2-player mode, either player can go; in vs AI mode, only human's turn
-  const currentPlayer = getCurrentPlayer(state.board);
-  if (!isTwoPlayerMode() && currentPlayer !== state.humanPlayer) return;
+  if (!isTwoPlayerMode() && state.currentPlayer !== state.humanPlayer) return;
 
   // Ignore if cell is occupied
   if (state.board[index] !== Player.Empty) return;
 
   // Place token (does NOT finalize turn)
+  const currentPlayer = state.currentPlayer;
   state.board[index] = currentPlayer;
   state.lastMove = index;
   state.pendingMove = index;
@@ -680,7 +688,7 @@ async function makeAIMove(): Promise<void> {
 
   // Random AI implementation for prototype phase
   const move = legalMoves[Math.floor(Math.random() * legalMoves.length)];
-  const currentPlayer = getCurrentPlayer(state.board);
+  const currentPlayer = state.currentPlayer;
 
   // Place token
   state.board[move] = currentPlayer;

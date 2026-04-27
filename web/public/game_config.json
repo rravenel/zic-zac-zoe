@@ -2,8 +2,8 @@
   "modes": [
     {
       "id": "point_cap",
-      "active": true,
-      "settings": { "target": 100 }
+      "active": false,
+      "settings": { "target": 200 }
     },
     {
       "id": "move_cap",
@@ -12,8 +12,8 @@
     },
     {
       "id": "point_lead",
-      "active": false,
-      "settings": { "margin": 25, "limit_per_side": 100 }
+      "active": true,
+      "settings": { "margin": 500, "limit_per_side": 100 }
     }
   ]
 }
