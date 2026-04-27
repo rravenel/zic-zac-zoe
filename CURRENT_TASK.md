@@ -5,7 +5,7 @@
 - **Last Updated:** 2026-04-26
 
 ## Tasks
-- [ ] **Sub-Task 1: Logic Refactor**
+- [x] **Sub-Task 1: Logic Refactor**
   - Refactor `game.ts` to use a shared `getAxisReports` core.
   - Update `calculateMoveScore` to utilize the new core.
   - Verify scoring parity via existing test suite/parity check.

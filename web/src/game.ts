@@ -165,31 +165,45 @@ function getMaxConsecutive(
 }
 
 /**
- * Calculate the score for a specific move based on the points variant rules.
+ * Detailed report of consecutive pieces on a single axis.
  */
-export function calculateMoveScore(
+interface AxisReport {
+  length: number;
+  indices: number[];
+  isBridge: boolean;
+}
+
+/**
+ * Scan all axes through a move and return detailed reports.
+ */
+function getAxisReports(
   board: BoardState,
   moveIndex: number,
   player: Player
-): number {
+): AxisReport[] {
   const [row, col] = indexToCoord(moveIndex);
   const directions = [
-    [0, 1],
-    [1, 0],
-    [1, 1],
-    [1, -1],
+    [0, 1], // Horizontal
+    [1, 0], // Vertical
+    [1, 1], // Diagonal (\)
+    [1, -1], // Diagonal (/)
   ];
 
-  const lineScores: number[] = [];
+  const reports: AxisReport[] = [];
 
   for (const [dr, dc] of directions) {
-    // Scan in negative direction
+    const axisIndices: number[] = [moveIndex];
     let l1 = 0;
+    let l2 = 0;
+
+    // Scan in negative direction
     let r = row - dr;
     let c = col - dc;
     while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
-      if (board[coordToIndex(r, c)] === player) {
+      const idx = coordToIndex(r, c);
+      if (board[idx] === player) {
         l1++;
+        axisIndices.push(idx);
         r -= dr;
         c -= dc;
       } else {
@@ -198,12 +212,13 @@ export function calculateMoveScore(
     }
 
     // Scan in positive direction
-    let l2 = 0;
     r = row + dr;
     c = col + dc;
     while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
-      if (board[coordToIndex(r, c)] === player) {
+      const idx = coordToIndex(r, c);
+      if (board[idx] === player) {
         l2++;
+        axisIndices.push(idx);
         r += dr;
         c += dc;
       } else {
@@ -212,34 +227,50 @@ export function calculateMoveScore(
     }
 
     const totalL = l1 + l2 + 1;
-
     if (totalL > 1) {
-      // Base Score logic
-      let base = totalL === 3 ? 0 : totalL;
-
-      // Bridge Bonus: 2x if move has neighbors on both sides of this axis
-      if (l1 > 0 && l2 > 0) {
-        base *= 2;
-      }
-
-      lineScores.push(base);
+      reports.push({
+        length: totalL,
+        indices: axisIndices,
+        isBridge: l1 > 0 && l2 > 0,
+      });
     }
+  }
+
+  return reports;
+}
+
+/**
+ * Calculate the score for a specific move based on the points variant rules.
+ */
+export function calculateMoveScore(
+  board: BoardState,
+  moveIndex: number,
+  player: Player
+): number {
+  const reports = getAxisReports(board, moveIndex, player);
+  const axisScores: number[] = [];
+
+  for (const report of reports) {
+    // Base Score logic: L=3 is 0, others are L
+    let score = report.length === 3 ? 0 : report.length;
+
+    // Bridge Bonus: 2x if move connects two existing segments
+    if (report.isBridge) {
+      score *= 2;
+    }
+
+    axisScores.push(score);
   }
 
   // Multiplier N: count of axes that actually scored points (> 0)
-  // This prevents lines of length 3 from contributing to the multiplier.
-  const nProductive = lineScores.filter((s) => s > 0).length;
+  const nProductive = axisScores.filter((s) => s > 0).length;
 
   if (nProductive === 0) {
-    // Check if this was a Lone Tile or a Trap
-    if (lineScores.length === 0) {
-      return 1; // Lone tile rule (no neighbors)
-    } else {
-      return 0; // The Trap (all neighbors were lines of 3)
-    }
+    // Lone tile rule (no neighbors on any axis) vs The Trap (all neighbors were lines of 3)
+    return reports.length === 0 ? 1 : 0;
   }
 
-  const sum = lineScores.reduce((a, b) => a + b, 0);
+  const sum = axisScores.reduce((a, b) => a + b, 0);
   return sum * nProductive;
 }
 
