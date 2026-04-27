@@ -214,6 +214,13 @@ body {
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;
+  
+  /* Initial state: no highlight, no blink */
+  --highlight-color: var(--color-cell-border);
+  border-color: var(--highlight-color);
+  
+  /* Global synchronized blink clock */
+  animation: crux-blink 1s step-end infinite;
 }
 
 .cell:hover:not(.occupied):not(.game-over) {
@@ -267,15 +274,24 @@ body {
   border-color: var(--color-o);
 }
 
-/* Points award highlights - pulsing border in player's color */
-.cell.scoring-highlight.x {
-  border-color: var(--color-x);
-  animation: crux-blink-x 1s step-end infinite;
+/* Points award highlights - persistent border in player's color */
+.cell.scoring-highlight-x {
+  --highlight-color: var(--color-x);
 }
 
-.cell.scoring-highlight.o {
-  border-color: var(--color-o);
-  animation: crux-blink-o 1s step-end infinite;
+.cell.scoring-highlight-o {
+  --highlight-color: var(--color-o);
+}
+
+/* Latest move per player - pulsing border */
+.cell.last-move-blink-x {
+  --blink-color: var(--color-x);
+  --off-color: var(--color-cell-border);
+}
+
+.cell.last-move-blink-o {
+  --blink-color: var(--color-o);
+  --off-color: var(--color-cell-border);
 }
 
 /* Game end highlights - border colors */
@@ -297,39 +313,28 @@ body {
 
 /* Checkmate crux cell blinking (1Hz = 1s period, same as scoreboard) */
 .cell.end-green.crux-blink {
-  animation: crux-blink-green 1s step-end infinite;
+  --blink-color: var(--color-win);
+  --off-color: var(--color-cell-border);
 }
 
 .cell.end-red.crux-blink {
-  animation: crux-blink-red 1s step-end infinite;
+  --blink-color: var(--color-lose);
+  --off-color: var(--color-cell-border);
 }
 
 .cell.end-x.crux-blink {
-  animation: crux-blink-x 1s step-end infinite;
+  --blink-color: var(--color-x);
+  --off-color: var(--color-cell-border);
 }
 
 .cell.end-o.crux-blink {
-  animation: crux-blink-o 1s step-end infinite;
+  --blink-color: var(--color-o);
+  --off-color: var(--color-cell-border);
 }
 
-@keyframes crux-blink-green {
-  0%, 50% { border-color: var(--color-win); }
-  50.01%, 100% { border-color: var(--color-cell-border); }
-}
-
-@keyframes crux-blink-red {
-  0%, 50% { border-color: var(--color-lose); }
-  50.01%, 100% { border-color: var(--color-cell-border); }
-}
-
-@keyframes crux-blink-x {
-  0%, 50% { border-color: var(--color-x); }
-  50.01%, 100% { border-color: var(--color-cell-border); }
-}
-
-@keyframes crux-blink-o {
-  0%, 50% { border-color: var(--color-o); }
-  50.01%, 100% { border-color: var(--color-cell-border); }
+@keyframes crux-blink {
+  0%, 50% { border-color: var(--blink-color, var(--highlight-color)); }
+  50.01%, 100% { border-color: var(--off-color, var(--highlight-color)); }
 }
 
 

@@ -18,6 +18,7 @@ import {
   getLegalMoves,
   GameCheckResult,
   calculateMoveScore,
+  getScoringIndices,
 } from "./game";
 import { loadModel, getAIMove, Difficulty } from "./ai";
 import { getRulesMove, isRulesAI } from "./rules-ai";
@@ -37,10 +38,13 @@ interface GameState {
   difficulty: Difficulty;
   gameOver: boolean;
   lastMove: number | null;
+  lastMoveX: number | null;
+  lastMoveO: number | null;
   result: GameCheckResult | null;
   playerXScore: number;
   playerOScore: number;
-  scoringHighlights: number[];
+  scoringHighlightsX: number[];
+  scoringHighlightsO: number[];
 }
 
 const state: GameState = {
@@ -50,10 +54,13 @@ const state: GameState = {
   difficulty: "medium",
   gameOver: false,
   lastMove: null,
+  lastMoveX: null,
+  lastMoveO: null,
   result: null,
   playerXScore: 0,
   playerOScore: 0,
-  scoringHighlights: [],
+  scoringHighlightsX: [],
+  scoringHighlightsO: [],
 };
 
 function isTwoPlayerMode(): boolean {
@@ -231,9 +238,10 @@ function renderBoard(): void {
       "end-o",
       "crux-blink",
       "game-over",
-      "scoring-highlight",
-      "x",
-      "o"
+      "scoring-highlight-x",
+      "scoring-highlight-o",
+      "last-move-blink-x",
+      "last-move-blink-o"
     );
 
     // Set piece content
@@ -256,12 +264,19 @@ function renderBoard(): void {
     }
 
     // Scoring highlights
-    if (state.scoringHighlights.includes(i)) {
-      el.classList.add("scoring-highlight");
-      // Add player class for color-specific blink
-      const pieceAtI = state.board[i];
-      if (pieceAtI === Player.X) el.classList.add("x");
-      else if (pieceAtI === Player.O) el.classList.add("o");
+    if (state.scoringHighlightsX.includes(i)) {
+      el.classList.add("scoring-highlight-x");
+    }
+    if (state.scoringHighlightsO.includes(i)) {
+      el.classList.add("scoring-highlight-o");
+    }
+
+    // Last move blinks
+    if (state.lastMoveX === i) {
+      el.classList.add("last-move-blink-x");
+    }
+    if (state.lastMoveO === i) {
+      el.classList.add("last-move-blink-o");
     }
 
     // Game over state
@@ -364,7 +379,10 @@ function newGame(): void {
   state.result = null;
   state.playerXScore = 0;
   state.playerOScore = 0;
-  state.scoringHighlights = [];
+  state.lastMoveX = null;
+  state.lastMoveO = null;
+  state.scoringHighlightsX = [];
+  state.scoringHighlightsO = [];
 
   clearStatsBlinking();
   renderBoard();
@@ -399,7 +417,14 @@ function handleCellClick(index: number): void {
  * Update the scoring highlights for the most recent move.
  */
 function updateHighlights(index: number, player: Player): void {
-  state.scoringHighlights = getScoringIndices(state.board, index, player);
+  const indices = getScoringIndices(state.board, index, player);
+  if (player === Player.X) {
+    state.lastMoveX = index;
+    state.scoringHighlightsX = indices;
+  } else {
+    state.lastMoveO = index;
+    state.scoringHighlightsO = indices;
+  }
 }
 
 /**
