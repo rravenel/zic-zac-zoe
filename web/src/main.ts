@@ -28,6 +28,20 @@ const AI_MOVE_DELAY = 500;      // Delay after human move before AI responds
 const AI_FIRST_MOVE_DELAY = 500; // Delay when AI goes first
 
 // =============================================================================
+// Configuration
+// =============================================================================
+
+interface ConfigMode {
+  id: string;
+  active: boolean;
+  settings: Record<string, number>;
+}
+
+interface GameConfig {
+  modes: ConfigMode[];
+}
+
+// =============================================================================
 // Game State
 // =============================================================================
 
@@ -47,6 +61,14 @@ interface GameState {
   lastMoveScoreO: number | null;
   scoringHighlightsX: number[];
   scoringHighlightsO: number[];
+  // Claim Variant additions
+  pendingMove: number | null;
+  awaitingDecision: boolean;
+  movesRemainingX: number;
+  movesRemainingO: number;
+  activeModeId: string;
+  modeSettings: Record<string, number>;
+  configError: string | null;
 }
 
 const state: GameState = {
@@ -65,6 +87,14 @@ const state: GameState = {
   lastMoveScoreO: null,
   scoringHighlightsX: [],
   scoringHighlightsO: [],
+  // Claim Variant defaults
+  pendingMove: null,
+  awaitingDecision: false,
+  movesRemainingX: 0,
+  movesRemainingO: 0,
+  activeModeId: "",
+  modeSettings: {},
+  configError: null,
 };
 
 function isTwoPlayerMode(): boolean {
@@ -395,6 +425,12 @@ function newGame(): void {
   state.scoringHighlightsX = [];
   state.scoringHighlightsO = [];
 
+  // Claim Variant initialization
+  state.pendingMove = null;
+  state.awaitingDecision = false;
+  state.movesRemainingX = state.modeSettings.limit_per_side || 0;
+  state.movesRemainingO = state.modeSettings.limit_per_side || 0;
+
   clearStatsBlinking();
   renderBoard();
   updateStatus();
@@ -702,11 +738,43 @@ if (import.meta.env.DEV) {
   validateScoringParity();
 }
 
+/**
+ * Load and validate game configuration
+ */
+async function loadConfig(): Promise<void> {
+  try {
+    const response = await fetch("/game_config.json");
+    if (!response.ok) {
+      throw new Error(`Failed to load config: ${response.statusText}`);
+    }
+    const config: GameConfig = await response.json();
+    
+    const activeModes = config.modes.filter(m => m.active);
+    
+    if (activeModes.length !== 1) {
+      state.configError = "CONFIGURATION ERROR: Multiple or No Active Modes";
+      return;
+    }
+    
+    const activeMode = activeModes[0];
+    state.activeModeId = activeMode.id;
+    state.modeSettings = activeMode.settings;
+    
+    console.log(`Active Mode: ${state.activeModeId}`, state.modeSettings);
+  } catch (error) {
+    console.error("Config loading error:", error);
+    state.configError = "CONFIGURATION ERROR: Failed to load config file";
+  }
+}
+
 // =============================================================================
 // Initialization
 // =============================================================================
 
 async function init(): Promise<void> {
+  // Load configuration first
+  await loadConfig();
+
   // Set up scaling
   updateScale();
   window.addEventListener("resize", updateScale);

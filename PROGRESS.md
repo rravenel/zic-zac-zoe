@@ -5,13 +5,13 @@
 - **Stopping Work:** When stopping work on a task, update its status to either ✅ **Completed** or ❌ **Blocked**, and commit the work to git.
 - **Finalization:** Ensure the status is updated before every commit or session handover. All completed or blocked work must be pushed.
 
-## Overall Status: 0% Complete
+## Overall Status: 20% Complete
 
 | Task | Description | Status |
 | :--- | :--- | :--- |
 | **Phase 1: Config & State** | | |
-| Task 1.1 | Config Manager Implementation | 🌑 Pending |
-| Task 1.2 | State Object Expansion | 🌑 Pending |
+| Task 1.1 | Config Manager Implementation | ✅ Completed |
+| Task 1.2 | State Object Expansion | ✅ Completed |
 | **Phase 2: Core Logic** | | |
 | Task 2.1 | Interaction Lock & Pending State | 🌑 Pending |
 | Task 2.2 | Scoring Engine Update | 🌑 Pending |
