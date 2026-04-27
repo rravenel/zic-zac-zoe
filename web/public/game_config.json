@@ -13,7 +13,7 @@
     {
       "id": "point_lead",
       "active": true,
-      "settings": { "margin": 500, "limit_per_side": 100 }
+      "settings": { "margin": 25, "limit_per_side": 18 }
     }
   ]
 }
