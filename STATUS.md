@@ -17,7 +17,7 @@ The project has evolved from a board-filling strategic game to a resource-manage
 ### 2. AI Architecture
 - **State:** The Neural Network for move selection is active, but the tactical rules are secondary.
 - **Decision Engine:** The AI uses a probabilistic model to decide whether to Claim or Pass based on points:
-  - `Points <= 1`: 50% claim chance.
+  - `Points <= 1`: 20% claim chance.
   - `Points >= 50`: 99% claim chance.
   - `Intermediate`: Linear probability scaling.
 

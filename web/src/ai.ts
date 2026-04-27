@@ -606,12 +606,12 @@ export function getAIDecision(points: number): "claim" | "pass" {
   let probability: number;
 
   if (points <= 1) {
-    probability = 0.5;
+    probability = 0.2;
   } else if (points >= 50) {
     probability = 0.99;
   } else {
-    // Linear interpolation between 1 and 50 points (0.5 to 0.99)
-    probability = 0.5 + 0.49 * ((points - 1) / 49);
+    // Linear interpolation between 1 and 50 points (0.2 to 0.99)
+    probability = 0.2 + 0.79 * ((points - 1) / 49);
   }
 
   return Math.random() < probability ? "claim" : "pass";
