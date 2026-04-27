@@ -1,21 +1,29 @@
-# Zic-Zac-Zoe AI
+# Zic-Zac-Zoe: Points Variant
 
-Neural network AI for Zic-Zac-Zoe, a tic-tac-toe variant.
+A strategic twist on tic-tac-toe where players bridge sequences to score high points. This project implements a neural network AI for a 6x6 variant of Zic-Zac-Zoe.
 
-## Game Rules
+## Game Rules (Points Variant)
 
-- 6x6 grid
-- **4 in a row wins**
-- **3 in a row loses** (the twist!)
-- Diagonals count
-- X moves first
+- **6x6 grid**
+- **Full-board play:** The game ends only when all 36 cells are filled.
+- **Scoring:** Points are awarded for every move based on the sequences created.
+- **Victory:** The player with the highest cumulative score at the end of the game wins.
+- **X moves first.**
+
+### Scoring Mechanics
+1. **Line Length (L):**
+   - $L=1$ (Isolated): **1 point**.
+   - $L=3$ (Penalty): **0 points**.
+   - Other lengths: **L points**.
+2. **Bridge Bonus:** If a move connects two existing segments (e.g., `X _ XX`), the point value for that line is **doubled**.
+3. **Productive Multiplier (N):** The total move score is multiplied by the number of axes that produced points (>0).
 
 ---
 
 ## Project Structure
 
 ```
-├── game.py              # Game logic and rules
+├── game.py              # Game logic and scoring engine
 ├── model.py             # Neural network (3-channel input)
 ├── train.py             # AlphaZero-style MCTS training
 ├── evaluate.py          # Benchmarking and ELO ratings
@@ -31,14 +39,15 @@ Neural network AI for Zic-Zac-Zoe, a tic-tac-toe variant.
 
 ## Source Files
 
-### `game.py` - Game Logic
+### `game.py` - Game Logic & Scoring
 
 | Component | Description |
 |-----------|-------------|
-| `Board` | 6x6 board state. Immutable, creates new board on move. |
+| `Board` | 6x6 board state including cumulative player scores. |
 | `Player` | Enum: EMPTY, X, O |
-| `GameResult` | Enum: ONGOING, X_WINS, O_WINS, DRAW |
-| `check_result_fast()` | Optimized check examining only lines through last move. |
+| `GameResult` | Enum: ONGOING, DRAW (Terminal state) |
+| `calculate_move_score()` | Scoring engine implementing bridge and multiplier rules. |
+| `check_result_fast()` | Optimized terminal check (triggers on full board). |
 
 ### `model.py` - Neural Network
 
@@ -57,42 +66,7 @@ Conv 3x3 -> BatchNorm -> ReLU  (x3 layers, 64 filters)
 Output: 36 log probs, 1 value [-1,1]
 ```
 
-| Component | Description |
-|-----------|-------------|
-| `ZicZacNet` | CNN with policy + value heads. ~50K params. |
-| `board_to_tensor()` | Convert Board to (1,3,6,6) tensor. |
-| `select_move()` | Sample move from policy with temperature. |
-
-### `train.py` - Training Pipeline
-
-**Algorithm:** AlphaZero-style MCTS self-play with:
-- Win-rate model selection (>55% to replace best)
-- MuZero-style reanalyze (fresh policy targets each batch)
-- Tactical injection (synthetic positions)
-
-| Component | Description |
-|-----------|-------------|
-| `TrainConfig` | Hyperparameters dataclass. |
-| `MCTSNode` | Tree node with neural network priors. |
-| `mcts_search()` | MCTS with PUCT selection. |
-| `ReplayBuffer` | FIFO buffer with uniform sampling. |
-| `reanalyze_batch()` | Regenerate policy targets with current model. |
-
-### `tactical_generator.py` - Synthetic Positions
-
-Generates training positions for critical patterns:
-- `avoid_3`: Positions where one move loses (creates 3-in-a-row)
-- `complete_4`: Positions where one move wins (creates 4-in-a-row)
-- `block_4`: Positions where must block opponent's winning threat
-
-### `evaluate.py` - Benchmarking
-
-| Component | Description |
-|-----------|-------------|
-| `random_player()` | Baseline: picks random legal move. |
-| `heuristic_player()` | Baseline: avoids instant losses, blocks threats. |
-| `evaluate_matchup()` | Play N games between two players, report win rates. |
-| `compute_elo_ratings()` | Round-robin tournament -> ELO ratings. |
+*Note: The current model was trained on a win/loss variant. In the Points Variant prototype, the AI plays randomly to provide a neutral opponent for mechanic testing.*
 
 ---
 
@@ -104,35 +78,15 @@ Generates training positions for critical patterns:
 pip install torch
 ```
 
-### Train a Model
+### Play Locally (Web App)
 
 ```bash
-# Basic training
-python train.py --iterations 100
-
-# Resume from checkpoint (auto-detected)
-python train.py --iterations 100
-
-# Start fresh
-python train.py --iterations 100 --fresh
+cd web
+npm install
+npm run dev
 ```
 
-### Evaluate
-
-```bash
-# Benchmark against baselines
-python evaluate.py --model checkpoints/model_best.pt
-
-# Compare checkpoints via ELO tournament
-python evaluate.py --compare "checkpoints/*.pt" --games 50
-```
-
-### Play Against AI
-
-```bash
-python play.py --model checkpoints/model_best.pt
-python play.py --model checkpoints/model_best.pt --difficulty expert
-```
+Open `http://localhost:5173` to play in the browser.
 
 ---
 
@@ -142,25 +96,11 @@ Browser-based game with retro 80s arcade styling.
 
 ### Features
 
-- **1P Mode**: Play against neural network AI
-- **2P Mode**: Local two-player
-- **Difficulty Levels**: Easy, Medium, Hard, Expert
-- **Play as X or O**: Choose your side (1P mode)
-- **Score Tracking**: Win/loss stats persist locally
-- **Checkmate Detection**: Highlights forced-win positions
-
-### Setup
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
-### URL Parameters
-
-- Default: Neural network AI
-- `?rules=1`: Rule-based AI (no neural network)
+- **1P Mode**: Play against a random-move AI prototype.
+- **2P Mode**: Local two-player.
+- **Real-time Scoreboard**: Dynamic tracking of X and O points.
+- **Developer Logs**: Verbose turn-by-turn scoring breakdown in the browser console.
+- **Win/Loss Stats**: Persistent tracking of game outcomes in local storage.
 
 ### Build for Production
 
