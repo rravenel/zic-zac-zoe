@@ -924,14 +924,18 @@ async function loadConfig(): Promise<void> {
       state.modeSettings = activeMode.settings;
       
       // Update mode display in header
-      const modeNames: Record<string, string> = {
-        "point_cap": "Point Cap",
-        "move_cap": "Move Cap",
-        "point_lead": "Point Lead"
-      };
-      const modeName = modeNames[state.activeModeId] || state.activeModeId;
-      const targetVal = state.modeSettings.target || state.modeSettings.limit_per_side || state.modeSettings.margin;
-      modeDisplayEl.textContent = `Mode: ${modeName} (${targetVal})`;
+      if (state.activeModeId === "point_lead") {
+        const margin = state.modeSettings.margin || 0;
+        modeDisplayEl.textContent = `Lead by ${margin} to Win!`;
+      } else {
+        const modeNames: Record<string, string> = {
+          "point_cap": "Point Cap",
+          "move_cap": "Move Cap"
+        };
+        const modeName = modeNames[state.activeModeId] || state.activeModeId;
+        const targetVal = state.modeSettings.target || state.modeSettings.limit_per_side;
+        modeDisplayEl.textContent = `Mode: ${modeName} (${targetVal})`;
+      }
       
       console.log(`Active Mode: ${state.activeModeId}`, state.modeSettings);
     }
