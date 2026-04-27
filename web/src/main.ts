@@ -404,12 +404,15 @@ function updateStatus(): void {
  * Update button visuals to reflect current state
  */
 function updateButtons(): void {
-  // Claim/Pass buttons blink when awaiting decision
-  btnClaim.classList.toggle("blinking", state.awaitingDecision);
-  btnPass.classList.toggle("blinking", state.awaitingDecision);
+  // Determine if it's the human's turn to act (decide on claim/pass)
+  const isHumanDecision = state.awaitingDecision && (isTwoPlayerMode() || state.currentPlayer === state.humanPlayer);
 
-  // Disable buttons if not awaiting decision or game over
-  const canAct = state.awaitingDecision && !state.gameOver;
+  // Claim/Pass buttons blink when awaiting human decision
+  btnClaim.classList.toggle("blinking", isHumanDecision);
+  btnPass.classList.toggle("blinking", isHumanDecision);
+
+  // Disable buttons if not awaiting human decision or game over
+  const canAct = isHumanDecision && !state.gameOver;
   btnClaim.disabled = !canAct;
   btnPass.disabled = !canAct;
 }
@@ -446,6 +449,10 @@ function endTurn(): void {
  */
 async function handleClaim(skipClear: boolean = false): Promise<void> {
   if (!state.awaitingDecision || state.pendingMove === null) return;
+
+  // Immediately stop blinking and disable interaction
+  state.awaitingDecision = false;
+  updateButtons();
 
   const currentPlayer = state.board[state.pendingMove];
   if (currentPlayer === Player.Empty) return;
@@ -486,7 +493,6 @@ async function handleClaim(skipClear: boolean = false): Promise<void> {
   }
 
   // Finalize
-  state.awaitingDecision = false;
   state.pendingMove = null;
 
   if (import.meta.env.DEV) {
@@ -502,6 +508,10 @@ async function handleClaim(skipClear: boolean = false): Promise<void> {
  */
 function handlePass(): void {
   if (!state.awaitingDecision || state.pendingMove === null) return;
+
+  // Immediately stop blinking and disable interaction
+  state.awaitingDecision = false;
+  updateButtons();
 
   const currentPlayer = state.board[state.pendingMove];
   if (currentPlayer === Player.Empty) return;
@@ -520,7 +530,6 @@ function handlePass(): void {
   }
 
   // Finalize
-  state.awaitingDecision = false;
   state.pendingMove = null;
 
   if (import.meta.env.DEV) {
@@ -627,6 +636,7 @@ function newGame(): void {
   clearStatsBlinking();
   renderBoard();
   updateStatus();
+  updateButtons();
   updateScoreboardDisplay();
 
   // If AI goes first (and we're not in 2-player mode), make AI move
