@@ -5,7 +5,7 @@
  * The model is small (~50K params) so this is feasible and avoids WASM issues.
  */
 
-import { BoardState, Player, BOARD_SIZE, getLegalMoves, getCurrentPlayer } from "./game";
+import { BoardState, Player, BOARD_SIZE, getLegalMoves, getOpponent, getScoringData } from "./game";
 import { createsFour, createsThree, findThreats } from "./rules-ai";
 
 // Difficulty settings: temperature values
@@ -18,8 +18,12 @@ export const DIFFICULTY = {
 
 export type Difficulty = keyof typeof DIFFICULTY;
 
+export type MoveIntent = "build" | "block";
+
 export interface AIResult {
   move: number;
+  intent: MoveIntent;
+  value: number;
   guardrailWeight: number;
 }
 
@@ -621,4 +625,93 @@ export function getAIDecision(points: number): "claim" | "pass" {
   }
 
   return decision;
+}
+
+/**
+ * Get tactical heuristic move based on proximity search and dual evaluation.
+ */
+export function getHeuristicMove(board: BoardState, aiPlayer: Player): AIResult | null {
+  const uniqueCandidates = new Set<number>();
+  const humanPlayer = getOpponent(aiPlayer);
+
+  // Step 1: Identify Candidates (Adjacent to existing pieces)
+  for (let i = 0; i < board.length; i++) {
+    if (board[i] !== Player.Empty) {
+      const row = Math.floor(i / BOARD_SIZE);
+      const col = i % BOARD_SIZE;
+
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = row + dr;
+          const nc = col + dc;
+          if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+            const nIdx = nr * BOARD_SIZE + nc;
+            if (board[nIdx] === Player.Empty) {
+              uniqueCandidates.add(nIdx);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (uniqueCandidates.size === 0) return null;
+
+  // Step 2: Dual Evaluation
+  const evaluatedMoves: {
+    idx: number;
+    scoreAI: number;
+    scoreHuman: number;
+    value: number;
+    intent: MoveIntent;
+  }[] = [];
+
+  for (const idx of uniqueCandidates) {
+    // Temporarily place AI piece to evaluate
+    const dataAI = getScoringData(board, idx, aiPlayer);
+    // Temporarily place Human piece to evaluate
+    const dataHuman = getScoringData(board, idx, humanPlayer);
+
+    // Threshold Filter: ignore if fewer than 4 tokens involved
+    const scoreAI = dataAI.involvedCells.length >= 4 ? dataAI.totalScore : 0;
+    const scoreHuman = dataHuman.involvedCells.length >= 4 ? dataHuman.totalScore : 0;
+
+    const value = Math.max(scoreAI, scoreHuman);
+
+    if (value > 0) {
+      // Tie-break (Human Block): if identical value, prioritize block
+      const intent: MoveIntent = scoreHuman >= scoreAI ? "block" : "build";
+      evaluatedMoves.push({ idx, scoreAI, scoreHuman, value, intent });
+    }
+  }
+
+  if (evaluatedMoves.length === 0) return null;
+
+  // Step 3: Selection
+  // Sort by value (descending)
+  evaluatedMoves.sort((a, b) => b.value - a.value);
+
+  const maxValue = evaluatedMoves[0].value;
+  const topMoves = evaluatedMoves.filter(m => m.value === maxValue);
+  
+  // Further filter top moves to prioritize block intent if available
+  const hasBlockInTop = topMoves.some(m => m.intent === "block");
+  const finalCandidates = hasBlockInTop 
+    ? topMoves.filter(m => m.intent === "block")
+    : topMoves;
+
+  // Random selection among equals
+  const selected = finalCandidates[Math.floor(Math.random() * finalCandidates.length)];
+
+  if (import.meta.env.DEV) {
+    console.log(`[Heuristic AI] Move: ${selected.idx}, Value: ${selected.value}, Intent: ${selected.intent.toUpperCase()}`);
+  }
+
+  return {
+    move: selected.idx,
+    intent: selected.intent,
+    value: selected.value,
+    guardrailWeight: 0
+  };
 }
