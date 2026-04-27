@@ -240,6 +240,61 @@ function getAxisReports(
 }
 
 /**
+ * Data structure for scoring results
+ */
+export interface ScoringData {
+  totalScore: number;
+  involvedCells: number[];
+}
+
+/**
+ * Get comprehensive scoring data for a move.
+ */
+export function getScoringData(
+  board: BoardState,
+  moveIndex: number,
+  player: Player
+): ScoringData {
+  const reports = getAxisReports(board, moveIndex, player);
+  const axisScores: number[] = [];
+  const involvedCells = new Set<number>();
+
+  if (reports.length === 0) {
+    // Lone tile case
+    return {
+      totalScore: 1,
+      involvedCells: [moveIndex],
+    };
+  }
+
+  for (const report of reports) {
+    // Base Score logic: L=3 is 0, others are L
+    let score = report.length === 3 ? 0 : report.length;
+
+    // Bridge Bonus: 2x if move connects two existing segments
+    if (report.isBridge) {
+      score *= 2;
+    }
+
+    axisScores.push(score);
+    
+    // All cells in any line > 1 are involved in the claim
+    report.indices.forEach(idx => involvedCells.add(idx));
+  }
+
+  // Multiplier N: count of axes that actually scored points (> 0)
+  const nProductive = axisScores.filter((s) => s > 0).length;
+
+  const sum = axisScores.reduce((a, b) => a + b, 0);
+  const totalScore = sum * nProductive;
+
+  return {
+    totalScore,
+    involvedCells: Array.from(involvedCells),
+  };
+}
+
+/**
  * Calculate the score for a specific move based on the points variant rules.
  */
 export function calculateMoveScore(
