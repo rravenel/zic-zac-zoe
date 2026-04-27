@@ -99,6 +99,7 @@ Browser-based game with retro 80s arcade styling.
 - **1P Mode**: Play against a random-move AI prototype.
 - **2P Mode**: Local two-player.
 - **Real-time Scoreboard**: Dynamic tracking of X and O points.
+- **Visual Move Feedback**: Synchronized pulsing for the latest moves and persistent highlights for scoring cells.
 - **Developer Logs**: Verbose turn-by-turn scoring breakdown in the browser console.
 - **Win/Loss Stats**: Persistent tracking of game outcomes in local storage.
 

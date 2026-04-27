@@ -19,7 +19,12 @@ The project has successfully transitioned from a "Connect N" win/loss game to a 
 - **State:** The Neural Network and Tactical Rule layers are currently **disconnected**.
 - **Behavior:** The AI selects purely random legal moves. This provides a neutral baseline for play-testing the scoring mechanics.
 
-### 3. Developer Tools (Dev Mode Only)
+### 3. Visual Feedback
+- **Synchronized Blinking:** The most recent move for both X and O pulses in unison using a global CSS animation clock.
+- **Persistent Scoring Highlights:** All pieces involved in a move's point award are highlighted with a steady border until that player's next move.
+- **Game Over Persistence:** The final move's scoring highlights remain visible through the "Game Over" state.
+
+### 4. Developer Tools (Dev Mode Only)
 - **Console Logger:** Verbose, color-coded turn snapshots in the browser console (Move #, Player, Points, ASCII board).
 - **Parity Check:** Automatic validation of the TypeScript scoring engine against the Python "Golden Set" on page load.
 
