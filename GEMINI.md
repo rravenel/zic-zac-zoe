@@ -3,6 +3,8 @@ always use .venv when appropriate (like running python)
 ## Git & Workflow
 - **Commit & Push:** All work must be committed and pushed to the remote repository.
 - **Feature Branch Workflow:** This is a solo project. We are working directly in a feature branch.
+- **Bootstrapping:** Before beginning work, always read `STATUS.md` to understand the current project phase, active game variant, and AI architectural state.
+- **History:** Completed build documents and specifications are archived in `docs/archive/`.
 
 ### Initial Build Procedure
 - **Context:** Applies when tasks in `TASKS.md` are defined and ongoing.
