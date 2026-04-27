@@ -14,6 +14,12 @@ always use .venv when appropriate (like running python)
 
 ### Active Feature Development
 - **Workflow:** For non-trivial features or refactors, use `CURRENT_TASK.md` to define the scope and track progress.
+- **Iterative Planning (Logic First):** If the user requests only a **Feature Specification** or "logic outline," populate only that section in `CURRENT_TASK.md` and stop. Do not generate sub-tasks, status tracking, or engineering details until explicitly directed to "proceed to implementation planning."
+- **Full Task Template:** A fully defined task in `CURRENT_TASK.md` must include:
+  1. `# Task Name`
+  2. `## Status` (Roll-up and checklist)
+  3. `## Feature Specification` (Functional logic)
+  4. `## Engineering Specification` (Technical implementation)
 - **Task Definition:** 
   - Every task must have a unique **Task Name**.
   - Always include a **QA** sub-task as the final step.
