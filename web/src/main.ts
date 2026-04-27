@@ -18,7 +18,7 @@ import {
   calculateMoveScore,
   getScoringData,
 } from "./game";
-import { loadModel, Difficulty, getAIDecision } from "./ai";
+import { loadModel, Difficulty, getAIDecision, getHeuristicMove, MoveIntent } from "./ai";
 import { isRulesAI } from "./rules-ai";
 
 // Timing constants (milliseconds)
@@ -682,13 +682,23 @@ function handleCellClick(index: number): void {
 async function makeAIMove(): Promise<void> {
   if (state.gameOver || state.configError) return;
 
-  // Sanity check
-  const legalMoves = getLegalMoves(state.board);
-  if (legalMoves.length === 0) return;
-
-  // Random AI implementation for prototype phase
-  const move = legalMoves[Math.floor(Math.random() * legalMoves.length)];
   const currentPlayer = state.currentPlayer;
+  
+  // 1. Try heuristic move first
+  let result = getHeuristicMove(state.board, currentPlayer);
+  let move: number;
+  let intent: MoveIntent;
+
+  if (result) {
+    move = result.move;
+    intent = result.intent;
+  } else {
+    // 2. Fallback to random legal move
+    const legalMoves = getLegalMoves(state.board);
+    if (legalMoves.length === 0) return;
+    move = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+    intent = "build"; // Fallback is always build
+  }
 
   // Place token
   state.board[move] = currentPlayer;
@@ -712,17 +722,23 @@ async function makeAIMove(): Promise<void> {
   if (state.board.every(cell => cell !== Player.Empty)) {
     handleClaim(true);
   } else {
-    // AI probabilistic decision
-    const scoringData = getScoringData(state.board, move, currentPlayer);
-    const decision = getAIDecision(scoringData.totalScore);
-    
-    setTimeout(() => {
-      if (decision === "claim") {
-        handleClaim();
-      } else {
-        handlePass();
-      }
-    }, AI_MOVE_DELAY);
+    // Decide action based on intent
+    if (intent === "block") {
+      // Never claim a block
+      setTimeout(() => handlePass(), AI_MOVE_DELAY);
+    } else {
+      // Build intent: probabilistic decision
+      const scoringData = getScoringData(state.board, move, currentPlayer);
+      const decision = getAIDecision(scoringData.totalScore);
+      
+      setTimeout(() => {
+        if (decision === "claim") {
+          handleClaim();
+        } else {
+          handlePass();
+        }
+      }, AI_MOVE_DELAY);
+    }
   }
 }
 
