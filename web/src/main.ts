@@ -19,6 +19,8 @@ import {
   GameCheckResult,
   calculateMoveScore,
   getScoringIndices,
+  getScoringData,
+  ScoringData,
 } from "./game";
 import { loadModel, getAIMove, Difficulty } from "./ai";
 import { getRulesMove, isRulesAI } from "./rules-ai";
@@ -404,6 +406,116 @@ function updateButtons(): void {
   btnDifficulty.classList.toggle("disabled", isTwoPlayerMode());
 }
 
+/**
+ * End the current turn and switch to the next player
+ */
+function endTurn(): void {
+  // Check for game over
+  checkGameOver();
+
+  if (state.gameOver) {
+    updateStatus();
+    renderBoard();
+    updateScoreboardDisplay();
+    return;
+  }
+
+  // Switch player is handled by getCurrentPlayer(state.board)
+  updateStatus();
+  updateButtons();
+  updateScoreboardDisplay();
+
+  // If now it's AI's turn, trigger it
+  const nextPlayer = getCurrentPlayer(state.board);
+  if (!isTwoPlayerMode() && nextPlayer !== state.humanPlayer) {
+    setTimeout(() => makeAIMove(), AI_MOVE_DELAY);
+  }
+}
+
+/**
+ * Handle Claim action
+ */
+async function handleClaim(): Promise<void> {
+  if (!state.awaitingDecision || state.pendingMove === null) return;
+
+  const currentPlayer = getCurrentPlayer(state.board);
+  const scoringData = getScoringData(state.board, state.pendingMove, currentPlayer);
+
+  // Update scores and highlights
+  if (currentPlayer === Player.X) {
+    state.playerXScore += scoringData.totalScore;
+    state.lastMoveScoreX = scoringData.totalScore;
+    state.scoringHighlightsX = scoringData.involvedCells;
+    state.lastMoveX = state.pendingMove;
+  } else {
+    state.playerOScore += scoringData.totalScore;
+    state.lastMoveScoreO = scoringData.totalScore;
+    state.scoringHighlightsO = scoringData.involvedCells;
+    state.lastMoveO = state.pendingMove;
+  }
+
+  // Visual feedback: add evaporate class to cells to be removed
+  const cells = boardEl.querySelectorAll(".cell");
+  scoringData.involvedCells.forEach((idx) => {
+    cells[idx].classList.add("evaporate");
+  });
+
+  // Wait for animation
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  // Clear cells from board (current player only)
+  scoringData.involvedCells.forEach((idx) => {
+    if (state.board[idx] === currentPlayer) {
+      state.board[idx] = Player.Empty;
+    }
+  });
+
+  // Finalize
+  state.awaitingDecision = false;
+  state.pendingMove = null;
+
+  renderBoard();
+  endTurn();
+}
+
+/**
+ * Handle Pass action
+ */
+function handlePass(): void {
+  if (!state.awaitingDecision || state.pendingMove === null) return;
+
+  const currentPlayer = getCurrentPlayer(state.board);
+
+  // Record +0 for the turn
+  if (currentPlayer === Player.X) {
+    state.lastMoveScoreX = 0;
+    state.scoringHighlightsX = [];
+    state.lastMoveX = state.pendingMove;
+  } else {
+    state.lastMoveScoreO = 0;
+    state.scoringHighlightsO = [];
+    state.lastMoveO = state.pendingMove;
+  }
+
+  // Finalize
+  state.awaitingDecision = false;
+  state.pendingMove = null;
+
+  renderBoard();
+  endTurn();
+}
+
+/**
+ * Check for game over based on active mode
+ */
+function checkGameOver(): void {
+  // Task 2.4 will implement full logic. For now, basic check.
+  const boardFull = state.board.every((cell) => cell !== Player.Empty);
+  if (boardFull) {
+    state.gameOver = true;
+  }
+}
+
 // =============================================================================
 // Game Logic
 // =============================================================================
@@ -482,7 +594,7 @@ function handleCellClick(index: number): void {
  * Make an AI move
  */
 async function makeAIMove(): Promise<void> {
-  if (state.gameOver) return;
+  if (state.gameOver || state.configError) return;
 
   // Sanity check
   const legalMoves = getLegalMoves(state.board);
@@ -492,35 +604,27 @@ async function makeAIMove(): Promise<void> {
   const move = legalMoves[Math.floor(Math.random() * legalMoves.length)];
   const currentPlayer = getCurrentPlayer(state.board);
 
-  // Calculate score BEFORE making the move
-  const moveScore = calculateMoveScore(state.board, move, currentPlayer);
-  if (currentPlayer === Player.X) {
-    state.playerXScore += moveScore;
-    state.lastMoveScoreX = moveScore;
-  } else {
-    state.playerOScore += moveScore;
-    state.lastMoveScoreO = moveScore;
-  }
-
-  state.board = makeMove(state.board, move);
+  // Place token
+  state.board[move] = currentPlayer;
   state.lastMove = move;
-  updateHighlights(move, currentPlayer);
+  state.pendingMove = move;
+  state.awaitingDecision = true;
 
-  // Check for game end
-  const result = checkResultFast(state.board, move);
-  if (result.result !== GameResult.Ongoing) {
-    state.gameOver = true;
-    state.result = result;
-    recordGameResult(result.result, state.humanPlayer);
+  // Decrement moves
+  if (currentPlayer === Player.X) {
+    state.movesRemainingX--;
+  } else {
+    state.movesRemainingO--;
   }
 
   renderBoard();
   updateStatus();
+  updateButtons();
   updateScoreboardDisplay();
 
-  if (import.meta.env.DEV) {
-    logTurnState(move, currentPlayer, moveScore);
-  }
+  // Temporary: AI always claims after a short delay
+  // Task 4.1 will implement probabilistic decision logic
+  setTimeout(() => handleClaim(), AI_MOVE_DELAY);
 }
 
 // =============================================================================
