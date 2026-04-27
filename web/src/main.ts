@@ -435,7 +435,7 @@ function endTurn(): void {
 /**
  * Handle Claim action
  */
-async function handleClaim(): Promise<void> {
+async function handleClaim(skipClear: boolean = false): Promise<void> {
   if (!state.awaitingDecision || state.pendingMove === null) return;
 
   const currentPlayer = getCurrentPlayer(state.board);
@@ -454,21 +454,23 @@ async function handleClaim(): Promise<void> {
     state.lastMoveO = state.pendingMove;
   }
 
-  // Visual feedback: add evaporate class to cells to be removed
-  const cells = boardEl.querySelectorAll(".cell");
-  scoringData.involvedCells.forEach((idx) => {
-    cells[idx].classList.add("evaporate");
-  });
+  if (!skipClear) {
+    // Visual feedback: add evaporate class to cells to be removed
+    const cells = boardEl.querySelectorAll(".cell");
+    scoringData.involvedCells.forEach((idx) => {
+      cells[idx].classList.add("evaporate");
+    });
 
-  // Wait for animation
-  await new Promise((resolve) => setTimeout(resolve, 500));
+    // Wait for animation
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-  // Clear cells from board (current player only)
-  scoringData.involvedCells.forEach((idx) => {
-    if (state.board[idx] === currentPlayer) {
-      state.board[idx] = Player.Empty;
-    }
-  });
+    // Clear cells from board (current player only)
+    scoringData.involvedCells.forEach((idx) => {
+      if (state.board[idx] === currentPlayer) {
+        state.board[idx] = Player.Empty;
+      }
+    });
+  }
 
   // Finalize
   state.awaitingDecision = false;
@@ -509,10 +511,65 @@ function handlePass(): void {
  * Check for game over based on active mode
  */
 function checkGameOver(): void {
-  // Task 2.4 will implement full logic. For now, basic check.
-  const boardFull = state.board.every((cell) => cell !== Player.Empty);
-  if (boardFull) {
+  if (state.gameOver) return;
+
+  const pointCap = state.modeSettings.target || 0;
+  const moveLimit = state.modeSettings.limit_per_side || 0;
+  const leadMargin = state.modeSettings.margin || 0;
+
+  // 1. Point Cap
+  if (state.activeModeId === "point_cap") {
+    if (state.playerXScore >= pointCap || state.playerOScore >= pointCap) {
+      state.gameOver = true;
+    }
+  }
+
+  // 2. Move Cap
+  if (state.activeModeId === "move_cap") {
+    if (state.movesRemainingX <= 0 && state.movesRemainingO <= 0) {
+      state.gameOver = true;
+    }
+  }
+
+  // 3. Point Lead
+  if (state.activeModeId === "point_lead") {
+    const diff = Math.abs(state.playerXScore - state.playerOScore);
+    if (diff >= leadMargin) {
+      state.gameOver = true;
+    } else if (state.movesRemainingX <= 0 && state.movesRemainingO <= 0) {
+      // Safety valve: move cap reached
+      state.gameOver = true;
+    }
+  }
+
+  // 4. Board Full is handled as an automatic trigger for claim + end game
+  // in handleCellClick / makeAIMove. 
+  // But as a fallback:
+  if (state.board.every(cell => cell !== Player.Empty)) {
     state.gameOver = true;
+  }
+
+  if (state.gameOver) {
+    // Determine winner for result display
+    let winner: Player = Player.Empty;
+    if (state.playerXScore > state.playerOScore) {
+      winner = Player.X;
+    } else if (state.playerOScore > state.playerXScore) {
+      winner = Player.O;
+    }
+
+    state.result = {
+      result: winner === Player.X ? GameResult.XWins : (winner === Player.O ? GameResult.OWins : GameResult.Draw),
+      winningIndices: [],
+      losingIndices: [],
+      losingPlayer: null
+    };
+
+    if (isTwoPlayerMode()) {
+      recordTwoPlayerResult(state.result.result);
+    } else {
+      recordGameResult(state.result.result, state.humanPlayer);
+    }
   }
 }
 
@@ -588,6 +645,11 @@ function handleCellClick(index: number): void {
   updateStatus();
   updateButtons();
   updateScoreboardDisplay();
+
+  // If board is full, auto-claim and end game
+  if (state.board.every(cell => cell !== Player.Empty)) {
+    handleClaim(true);
+  }
 }
 
 /**
@@ -622,9 +684,14 @@ async function makeAIMove(): Promise<void> {
   updateButtons();
   updateScoreboardDisplay();
 
-  // Temporary: AI always claims after a short delay
-  // Task 4.1 will implement probabilistic decision logic
-  setTimeout(() => handleClaim(), AI_MOVE_DELAY);
+  // If board is full, auto-claim and end game
+  if (state.board.every(cell => cell !== Player.Empty)) {
+    handleClaim(true);
+  } else {
+    // Temporary: AI always claims after a short delay
+    // Task 4.1 will implement probabilistic decision logic
+    setTimeout(() => handleClaim(), AI_MOVE_DELAY);
+  }
 }
 
 // =============================================================================
