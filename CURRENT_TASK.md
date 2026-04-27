@@ -1,19 +1,24 @@
 # Current Task: Points-Award Cell Highlighting
 
 ## Status
-- **State:** ✅ Completed
+- **State:** 2/3 Complete
 - **Last Updated:** 2026-04-26
 
 ## Tasks
-- [x] **Sub-Task 1: Logic Refactor**
+- **Sub-Task 1: Logic Refactor**
+  - **Status:** complete
   - Refactor `game.ts` to use a shared `getAxisReports` core.
   - Update `calculateMoveScore` to utilize the new core.
   - Verify scoring parity via existing test suite/parity check.
-- [x] **Sub-Task 2: UI Integration**
+- **Sub-Task 2: UI Integration**
+  - **Status:** complete
   - Implement `getScoringIndices` in `game.ts`.
   - Update `GameState` in `main.ts` to track highlights.
   - Implement rendering and CSS for `.scoring-highlight`.
   - Verify persistence through final game state.
+- **Sub-Task 3: QA**
+  - **Status:** pending
+  - Final verification of feature behavior in browser.
 
 ---
 
@@ -73,3 +78,27 @@ To prevent logic drift and ensure performance, the scoring engine will be refact
 
 **`main.ts`**
 - `function updateHighlights(index: number, player: Player): void` (Internal helper to update state and trigger re-render)
+
+---
+
+## Template
+```markdown
+# Current Task: [Task Name]
+
+## Status
+- **State:** 0/N Complete
+- **Last Updated:** [Date]
+
+## Tasks
+- **Sub-Task 1: [Description]**
+  - **Status:** pending
+  - [Details]
+- **Sub-Task N: QA**
+  - **Status:** pending
+  - Final verification of feature behavior.
+
+---
+
+## Engineering Specification
+[Detailed Spec]
+```

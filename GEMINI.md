@@ -13,13 +13,23 @@ always use .venv when appropriate (like running python)
 - **Tracking:** Maintain `PROGRESS.md` and specification files for every change. Whenever a task is marked as ✅ **Completed** or ❌ **Blocked**, the corresponding work must be committed to git and pushed.
 
 ### Active Feature Development
-- **Workflow:** For non-trivial features or refactors, use `CURRENT_TASK.md` to define the scope.
-- **Protocol:**
-  1. **Draft Spec:** Outline the architectural change and function signatures.
-  2. **Sub-tasks:** Break the work into atomic units (e.g., Logic Refactor vs. UI Integration).
-  3. **Atomic Commits:** Each sub-task should typically correspond to a single commit.
-  4. **State Tracking:** Update the "Status" and "Tasks" sections in `CURRENT_TASK.md` as work progresses.
-- **Completion:** Once all sub-tasks are ✅ **Completed**, the feature is considered delivered and `CURRENT_TASK.md` may be cleared or archived.
+- **Workflow:** For non-trivial features or refactors, use `CURRENT_TASK.md` to define the scope and track progress.
+- **Task Definition:** 
+  - Every task must have a unique **Task Name**.
+  - Always include a **QA** sub-task as the final step.
+- **Status Tracking:**
+  - **Sub-tasks:** Use explicit states: `pending`, `in-progress`, `blocked`, `complete`.
+  - **Overall Status:** Represented as a roll-up of progress (e.g., `Status: 1/3 Complete`).
+- **Atomic Commits:**
+  - Each sub-task corresponds to a single commit.
+  - **Commit Message Format:** `[Task Name] Sub-task X/Y: <Description>`
+- **Completion & Cleanup Sequence:**
+  1. **User Approval:** The task is only finished when the **user** explicitly declares that the QA sub-task has passed.
+  2. **Final Task Commit:** Once QA passes, mark all sub-tasks (including QA) as `complete` and set the overall state to ✅ **Complete** in `CURRENT_TASK.md`. Commit this file immediately so the git history contains the full record of the finished task.
+  3. **Workspace Reset:** After the final task commit:
+     - Update `STATUS.md` and `README.md` to reflect the new state of the project.
+     - Wipe `CURRENT_TASK.md`, leaving only an empty template.
+     - Commit these changes together as a "Cleanup & Reset" commit.
 
 ### Maintenance & Debugging Procedure
 - **Context:** Applies once initial tasks are complete, or for surgical bug fixes and iterative tweaks.
