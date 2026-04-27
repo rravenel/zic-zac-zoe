@@ -40,6 +40,7 @@ interface GameState {
   result: GameCheckResult | null;
   playerXScore: number;
   playerOScore: number;
+  scoringHighlights: number[];
 }
 
 const state: GameState = {
@@ -52,6 +53,7 @@ const state: GameState = {
   result: null,
   playerXScore: 0,
   playerOScore: 0,
+  scoringHighlights: [],
 };
 
 function isTwoPlayerMode(): boolean {
@@ -228,7 +230,10 @@ function renderBoard(): void {
       "end-x",
       "end-o",
       "crux-blink",
-      "game-over"
+      "game-over",
+      "scoring-highlight",
+      "x",
+      "o"
     );
 
     // Set piece content
@@ -248,6 +253,15 @@ function renderBoard(): void {
       }
       el.innerHTML = `<span class="piece ${pieceClass}">${symbol}</span>`;
       el.classList.add("occupied");
+    }
+
+    // Scoring highlights
+    if (state.scoringHighlights.includes(i)) {
+      el.classList.add("scoring-highlight");
+      // Add player class for color-specific blink
+      const pieceAtI = state.board[i];
+      if (pieceAtI === Player.X) el.classList.add("x");
+      else if (pieceAtI === Player.O) el.classList.add("o");
     }
 
     // Game over state
@@ -350,6 +364,7 @@ function newGame(): void {
   state.result = null;
   state.playerXScore = 0;
   state.playerOScore = 0;
+  state.scoringHighlights = [];
 
   clearStatsBlinking();
   renderBoard();
@@ -381,6 +396,13 @@ function handleCellClick(index: number): void {
 }
 
 /**
+ * Update the scoring highlights for the most recent move.
+ */
+function updateHighlights(index: number, player: Player): void {
+  state.scoringHighlights = getScoringIndices(state.board, index, player);
+}
+
+/**
  * Make a human move (handles both vs AI and 2-player modes)
  */
 function makeHumanMove(index: number): void {
@@ -396,6 +418,7 @@ function makeHumanMove(index: number): void {
 
   state.board = makeMove(state.board, index);
   state.lastMove = index;
+  updateHighlights(index, currentPlayer);
 
   // Check for game end
   const result = checkResultFast(state.board, index);
@@ -449,6 +472,7 @@ async function makeAIMove(): Promise<void> {
 
   state.board = makeMove(state.board, move);
   state.lastMove = move;
+  updateHighlights(move, currentPlayer);
 
   // Check for game end
   const result = checkResultFast(state.board, move);

@@ -275,6 +275,41 @@ export function calculateMoveScore(
 }
 
 /**
+ * Get the indices of all cells involved in the points award for a move.
+ */
+export function getScoringIndices(
+  board: BoardState,
+  moveIndex: number,
+  player: Player
+): number[] {
+  const reports = getAxisReports(board, moveIndex, player);
+  const scoringIndices = new Set<number>();
+
+  // Determine if this was a Lone Tile (1pt)
+  const score = calculateMoveScore(board, moveIndex, player);
+  
+  if (score === 1 && reports.length === 0) {
+    // Lone tile: only the move itself is highlighted
+    return [moveIndex];
+  }
+
+  if (score === 0) {
+    // The Trap or invalid move: no highlights
+    return [];
+  }
+
+  // Collect indices from all productive axes (axes that scored points)
+  for (const report of reports) {
+    const axisScore = report.length === 3 ? 0 : report.length;
+    if (axisScore > 0) {
+      report.indices.forEach((idx) => scoringIndices.add(idx));
+    }
+  }
+
+  return Array.from(scoringIndices);
+}
+
+/**
  * Result of checking game state
  */
 export interface GameCheckResult {

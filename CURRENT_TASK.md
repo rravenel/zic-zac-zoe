@@ -1,7 +1,7 @@
 # Current Task: Points-Award Cell Highlighting
 
 ## Status
-- **State:** ⏳ Pending
+- **State:** ✅ Completed
 - **Last Updated:** 2026-04-26
 
 ## Tasks
@@ -9,7 +9,7 @@
   - Refactor `game.ts` to use a shared `getAxisReports` core.
   - Update `calculateMoveScore` to utilize the new core.
   - Verify scoring parity via existing test suite/parity check.
-- [ ] **Sub-Task 2: UI Integration**
+- [x] **Sub-Task 2: UI Integration**
   - Implement `getScoringIndices` in `game.ts`.
   - Update `GameState` in `main.ts` to track highlights.
   - Implement rendering and CSS for `.scoring-highlight`.

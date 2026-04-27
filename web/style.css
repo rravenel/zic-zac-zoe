@@ -267,6 +267,17 @@ body {
   border-color: var(--color-o);
 }
 
+/* Points award highlights - pulsing border in player's color */
+.cell.scoring-highlight.x {
+  border-color: var(--color-x);
+  animation: crux-blink-x 1s step-end infinite;
+}
+
+.cell.scoring-highlight.o {
+  border-color: var(--color-o);
+  animation: crux-blink-o 1s step-end infinite;
+}
+
 /* Game end highlights - border colors */
 .cell.end-green {
   border-color: var(--color-win);
