@@ -104,18 +104,46 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 15px;
 }
 
-#scoreboard .piece.x, #scoreboard #score-x {
+.score-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.score-main {
+  display: flex;
+  align-items: center;
+}
+
+.last-points {
+  font-size: 20px;
+  margin-top: 4px;
+  height: 20px; /* Preserve space even when empty */
+  visibility: hidden;
+}
+
+.last-points.visible {
+  visibility: visible;
+}
+
+#scoreboard .score-container.x .piece, 
+#scoreboard .score-container.x #score-x,
+#scoreboard .score-container.x .last-points {
   color: var(--color-x);
 }
 
-#scoreboard .piece.o, #scoreboard #score-o {
+#scoreboard .score-container.o .piece, 
+#scoreboard .score-container.o #score-o,
+#scoreboard .score-container.o .last-points {
   color: var(--color-o);
 }
 
 #scoreboard .score-separator {
   color: var(--color-text);
+  margin-bottom: 14px; /* Align with score-main */
 }
 
 /* =============================================================================
@@ -133,6 +161,11 @@ body {
   box-sizing: border-box;
   overflow: hidden;
   background-color: var(--color-bg);
+  visibility: hidden; /* Hidden by default (hides YOUR TURN) */
+}
+
+.status.game-over-visible {
+  visibility: visible;
 }
 
 .status.hidden {

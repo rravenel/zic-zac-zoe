@@ -43,6 +43,8 @@ interface GameState {
   result: GameCheckResult | null;
   playerXScore: number;
   playerOScore: number;
+  lastMoveScoreX: number | null;
+  lastMoveScoreO: number | null;
   scoringHighlightsX: number[];
   scoringHighlightsO: number[];
 }
@@ -59,6 +61,8 @@ const state: GameState = {
   result: null,
   playerXScore: 0,
   playerOScore: 0,
+  lastMoveScoreX: null,
+  lastMoveScoreO: null,
   scoringHighlightsX: [],
   scoringHighlightsO: [],
 };
@@ -191,6 +195,8 @@ const btnDifficulty = document.getElementById("btn-difficulty")!;
 const btnNewGame = document.getElementById("btn-new-game")!;
 const scoreXEl = document.getElementById("score-x")!;
 const scoreOEl = document.getElementById("score-o")!;
+const lastPointsXEl = document.getElementById("last-points-x")!;
+const lastPointsOEl = document.getElementById("last-points-o")!;
 
 // Difficulty levels for cycling (1-4 stars)
 const DIFFICULTY_LEVELS: Difficulty[] = ["easy", "medium", "hard", "expert"];
@@ -292,15 +298,31 @@ function renderBoard(): void {
 function updateScoreboardDisplay(): void {
   scoreXEl.textContent = state.playerXScore.toString().padStart(5, " ");
   scoreOEl.textContent = state.playerOScore.toString().padStart(5, " ");
+
+  // Update last points indicators
+  if (state.lastMoveScoreX !== null) {
+    lastPointsXEl.textContent = `+${state.lastMoveScoreX}`;
+    lastPointsXEl.classList.add("visible");
+  } else {
+    lastPointsXEl.classList.remove("visible");
+  }
+
+  if (state.lastMoveScoreO !== null) {
+    lastPointsOEl.textContent = `+${state.lastMoveScoreO}`;
+    lastPointsOEl.classList.add("visible");
+  } else {
+    lastPointsOEl.classList.remove("visible");
+  }
 }
 
 /**
  * Update the status display
  */
 function updateStatus(): void {
-  statusEl.classList.remove("your-turn", "x-turn", "o-turn", "win", "lose", "draw", "x-wins", "o-wins", "hidden");
+  statusEl.classList.remove("win", "lose", "draw", "x-wins", "o-wins", "game-over-visible");
 
   if (state.gameOver) {
+    statusEl.classList.add("game-over-visible");
     // Determine winner based on scores
     if (state.playerXScore === state.playerOScore) {
       statusEl.textContent = "TIE GAME";
@@ -324,19 +346,6 @@ function updateStatus(): void {
           statusEl.classList.add("lose");
         }
       }
-    }
-  } else {
-    const currentPlayer = getCurrentPlayer(state.board);
-    if (isTwoPlayerMode()) {
-      // 2-player mode: show whose turn in player's color
-      statusEl.textContent = currentPlayer === Player.X ? "X PLAYS" : "O PLAYS";
-      statusEl.classList.add(currentPlayer === Player.X ? "x-turn" : "o-turn");
-    } else if (currentPlayer === state.humanPlayer) {
-      statusEl.textContent = "YOUR TURN";
-      statusEl.classList.add("your-turn");
-    } else {
-      // Hide status completely when AI is thinking (avoids repaint artifacts)
-      statusEl.classList.add("hidden");
     }
   }
 }
@@ -379,6 +388,8 @@ function newGame(): void {
   state.result = null;
   state.playerXScore = 0;
   state.playerOScore = 0;
+  state.lastMoveScoreX = null;
+  state.lastMoveScoreO = null;
   state.lastMoveX = null;
   state.lastMoveO = null;
   state.scoringHighlightsX = [];
@@ -437,8 +448,10 @@ function makeHumanMove(index: number): void {
   const moveScore = calculateMoveScore(state.board, index, currentPlayer);
   if (currentPlayer === Player.X) {
     state.playerXScore += moveScore;
+    state.lastMoveScoreX = moveScore;
   } else {
     state.playerOScore += moveScore;
+    state.lastMoveScoreO = moveScore;
   }
 
   state.board = makeMove(state.board, index);
@@ -491,8 +504,10 @@ async function makeAIMove(): Promise<void> {
   const moveScore = calculateMoveScore(state.board, move, currentPlayer);
   if (currentPlayer === Player.X) {
     state.playerXScore += moveScore;
+    state.lastMoveScoreX = moveScore;
   } else {
     state.playerOScore += moveScore;
+    state.lastMoveScoreO = moveScore;
   }
 
   state.board = makeMove(state.board, move);

@@ -14,11 +14,21 @@
       <header class="header">
         <h1 class="title">ZIC-ZAC-ZOE</h1>
         <div id="scoreboard">
-          <span class="piece x">X:</span><span id="score-x" class="score-value">    0</span>
-          &nbsp;
+          <div class="score-container x">
+            <div class="score-main">
+              <span class="piece x">X:</span><span id="score-x" class="score-value">    0</span>
+            </div>
+            <div id="last-points-x" class="last-points">+0</div>
+          </div>
+          
           <span class="score-separator">-</span>
-          &nbsp;
-          <span class="piece o">O:</span><span id="score-o" class="score-value">    0</span>
+          
+          <div class="score-container o">
+            <div class="score-main">
+              <span class="piece o">O:</span><span id="score-o" class="score-value">    0</span>
+            </div>
+            <div id="last-points-o" class="last-points">+0</div>
+          </div>
         </div>
       </header>
 
